@@ -1,0 +1,83 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block title %}Details about {{ request.id }}{% endblock %}
+
+{% block css %}{% endblock %}
+
+{% block navbar %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a href="{% url 'user' %}" class="navbar-brand">Hello, {{ request.user }}!</a>
+            </div>
+        </div>
+        <ul class="navbar-nav nav">
+            <li class="nav-item active">
+                <a href="{% url "analysis" %}" class="nav-link">Analysis</a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'log-out' %}" class="nav-link">LogOut</a>
+            </li>
+            <li class="nav-time active">
+                <a href="{% url  "user" %}" class="nav-link">Home</a>
+            </li>
+        </ul>
+        <ul class="pagination">
+            {% if previous %}
+                <li class="page-item"><a class="page-link" href="{% url "edit" name=previous.name %}">Previous</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="">Previous</a></li>
+            {% endif %}
+            {% if next %}
+                <li class="page-item"><a class="page-link" href="{% url "edit" name=next.name %}">Next</a></li>
+            {% else %}
+                <li class="page-item"><a class="page-link" href="">Next</a></li>
+            {% endif %}
+        </ul>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col">
+            <h1>This is analysis: {{ name }}</h1>
+            <form method="POST" enctype="multipart/form-data">
+                {% csrf_token %}
+                <div class="form-group">
+                    <label for="{{ form.signal_speed.id_for_label }}">Signal Speed</label>
+                    {{ form.signal_speed }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.signal_direction.id_for_label }}">Signal Direction</label>
+                    {{ form.signal_direction }}
+                </div>
+                <div class="form-group">
+                    <label for="{{ form.step_group.id_for_label }}">Step Group</label>
+                    {{ form.step_group }}
+                </div>
+                <div class="row">
+                    <div class="col form-group">
+                        <label for="{{ form.start_sector_direction.id_for_label }}">Start Sector Direction</label>
+                        {{ form.start_sector_direction }}
+                    </div>
+                    <div class="col form-group">
+                        <label for="{{ form.end_sector_direction.id_for_label }}">End Sector Direction</label>
+                        {{ form.end_sector_direction }}
+                    </div>
+                </div>
+                <div class="row">
+                    <div class="col form-group">
+                        <label for="{{ form.start_sector_speed.id_for_label }}">Start Sector Speed</label>
+                        {{ form.start_sector_speed }}
+                    </div>
+                    <div class="col form-group">
+                        <label for="{{ form.end_sector_speed.id_for_label }}">End Sector Speed</label>
+                        {{ form.end_sector_speed }}
+                    </div>
+                </div>
+                <button type="submit" class="btn btn-primary">Calculate</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}

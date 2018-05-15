@@ -1,0 +1,71 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %}Details about analysis: {{ analysis.name }}{% endblock %}
+
+{% block css %}{% endblock %}
+
+{% block navbar %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a href="{% url 'user' %}" class="navbar-brand">Hello, {{ request.user }}!</a>
+            </div>
+        </div>
+        <ul class="navbar-nav nav">
+            <li class="nav-item active">
+                <a href="{% url "analysis" %}" class="nav-link">Analysis</a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'log-out' %}" class="nav-link">LogOut</a>
+            </li>
+            <li class="nav-time active">
+                <a href="{% url  "user" %}" class="nav-link">Home</a>
+            </li>
+        </ul>
+    </nav>
+{% endblock %}
+
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col self-align-center">
+            <div class="row justify-content-center ">
+                Name: {{ analysis.name }}
+            </div>
+            <div class="row justify-content-center">
+                Create date: {{ analysis.date_create }}
+            </div>
+            <div class="row justify-content-center">
+                Modification date: {{ analysis.date_modification }}
+            </div>
+            <div class="row justify-content-center ">
+                Signal Speed: {{ analysis.signal_speed }}
+            </div>
+            <div class="row justify-content-center">
+                Signal Direction: {{ analysis.signal_direction }}
+            </div>
+            <div class="row justify-content-center">
+                Step group: {{ analysis.step_group }}
+            </div>
+            <div class="row justify-content-center">
+                Start Sector Direction: {{ analysis.start_sector_direction }}
+            </div>
+            <div class="row justify-content-center">
+                End Sector Direction: {{ analysis.end_sector_direction }}
+            </div>
+            <div class="row justify-content-center">
+                Start Sector Speed: {{ analysis.start_sector_speed }}
+            </div>
+            <div class="row justify-content-center">
+                End Sector Speed: {{ analysis.end_sector_speed }}
+            </div>
+            <div class="row justify-content-center">
+                <div class="col-4 self-align-center links-center" style="text-align: center">
+                    <a href="{% url "edit" name=analysis.name %}">Edit</a>
+                    <a href="{% url "download-zip" name=analysis.name %}">Download Zip</a>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

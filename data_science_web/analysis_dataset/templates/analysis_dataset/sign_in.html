@@ -1,0 +1,31 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %}DataSet Analysis{% endblock %}
+
+{%  block css  %}
+    <link rel="stylesheet" href="{% static "css/center_block.css" %}">
+{% endblock %}
+
+{% block navbar %}
+{% endblock %}
+
+{% block content %}
+    <div class="block-wrapper">
+        <form method="POST" class="form-group form">
+            {% csrf_token %}
+            {% for field in form %}
+                <div class="form-group">
+                    {{ field.errors }}
+                    {{ field.label_tag }}
+                    {{ field }}
+                    {% if field.help_text %}
+                        <p class="help">{{ field.help_text|safe }}</p>
+                    {% endif %}
+                </div>
+            {% endfor %}
+            <button type="submit" id="check_form" class="btn">Sign-In</button>
+            <a href="{% url 'register' %}" class="btn btn-primary">Regiser</a>
+        </form>
+    </div>
+{% endblock %}

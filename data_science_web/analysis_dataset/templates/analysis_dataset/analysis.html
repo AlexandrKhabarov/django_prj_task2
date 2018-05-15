@@ -1,0 +1,75 @@
+{% extends "base.html" %}
+{% load staticfiles %}
+
+{% block title %}AllAnalysis{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/analysis-styles.css' %}"
+{% endblock %}
+
+{% block navbar %}
+    <nav class="navbar navbar-expand-lg navbar-light bg-light">
+        <div class="container-fluid">
+            <div class="navbar-header">
+                <a href="{% url 'user' %}" class="navbar-brand">Hello, {{ request.user }}!</a>
+            </div>
+        </div>
+        <ul class="navbar-nav nav">
+            <li class="nav-item active">
+                <a href="{% url "analysis" %}" class="nav-link">Analysis</a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'log-out' %}" class="nav-link">LogOut</a>
+            </li>
+            <li class="nav-time active">
+                <a href="{% url  "user" %}" class="nav-link">Home</a>
+            </li>
+            <li class="nav-item active">
+                <a href="{% url 'create' %}" class="nav-link">Create Analysis</a>
+            </li>
+        </ul>
+    </nav>
+{% endblock %}
+
+{% block content %}
+    <div class="row justify-content-center">
+        <div class="col">
+            {% if analysises %}
+                {% for analysis in analysises %}
+                    <div class="select-analysis">
+                        <div class="row justify-content-center ">
+                            Name: {{ analysis.name }}
+                        </div>
+                        <div class="row justify-content-center">
+                            Create date: {{ analysis.date_create }}
+                        </div>
+                        <div class="row justify-content-center">
+                            Modification date: {{ analysis.date_modification }}
+                        </div>
+                        <div class="row justify-content-center">
+                            <div class="col-4 self-align-center links-center" style="text-align: center">
+                                <a href="{% url "details" name=analysis.name %}">Details</a>
+                                <a href="{% url "edit" name=analysis.name %}">Edit</a>
+                                <a href="{% url "download-zip" name=analysis.name %}">Download Zip</a>
+                                <a href="{% url "delete" name=analysis.name %}">Delete Analysis</a>
+                                <a href="{% url "calculate" name=analysis.name %}">Calculate IT!</a>
+                            </div>
+                        </div>
+                    </div>
+                {% endfor %}
+            {% else %}
+                <div class="row justify-content-center">
+                    No Analysis
+                </div>
+            {% endif %}
+        </div>
+        <div class="col">
+            <form method="GET" action="{% url 'analysis' %}">
+                {% csrf_token %}
+                {{ form_search }}
+                <button type="submit">SEARCH BRO</button>
+            </form>
+        </div>
+    </div>
+{% endblock %}
+

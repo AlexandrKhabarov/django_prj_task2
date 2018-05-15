@@ -1,0 +1,29 @@
+{% extends 'base.html' %}
+{% load staticfiles %}
+
+{% block title %}{% endblock %}
+
+{% block css %}
+    <link rel="stylesheet" href="{% static 'css/center_block.css' %}">
+    <link rel="stylesheet" href="{% static 'css/success_styles.css' %}">
+{% endblock %}
+
+{% block navbar %}{% endblock %}
+
+{% block content %}
+    <div class="block-wrapper">
+        <div class="success-message">
+            <div class="success-message">
+                {{ analysis }} was successfully changed
+                <div class="row justify-content-center">
+                    <div class="col">
+                        <a href="{% url "analysis" %}">Go to the analysis</a>
+                    </div>
+                    <div class="col">
+                        <a href="{% url "user" %}">Home</a>
+                    </div>
+                </div>
+            </div>
+        </div>
+    </div>
+{% endblock %}

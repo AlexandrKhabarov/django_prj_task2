@@ -1,0 +1,26 @@
+body, html {
+    height: 100%;
+    width: 100%;
+    margin: 0;
+}
+
+.container {
+    box-sizing: border-box;
+    height: 100%;
+}
+
+.content-wrapper {
+    position: fixed;
+    top: 0;
+    bottom: 0;
+    right: 0;
+    left: 0;
+}
+
+.column {
+    flex-basis: 22rem;
+}
+
+input[type='number'] {
+    -moz-appearance: textfield;
+}
