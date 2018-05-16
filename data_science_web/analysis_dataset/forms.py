@@ -3,13 +3,13 @@ from .models import Analysis
 
 
 class EditForm(forms.ModelForm):
-    signal_speed = forms.IntegerField(label="Signal Speed", widget=forms.NumberInput(attrs={
+    signal_speed = forms.IntegerField(label="Signal Speed", max_value=4, min_value=1, widget=forms.NumberInput(attrs={
         "min": 1,
         "max": 4,
         "type": "number",
         "class": "form-control"
     }))
-    signal_direction = forms.IntegerField(label="Signal Direction", widget=forms.NumberInput(attrs={
+    signal_direction = forms.IntegerField(label="Signal Direction", max_value=4, min_value=1, widget=forms.NumberInput(attrs={
         "min": 1,
         "max": 4,
         "type": "number",
@@ -19,19 +19,19 @@ class EditForm(forms.ModelForm):
         "type": "number",
         "class": "form-control"
     }))
-    start_sector_direction = forms.IntegerField(label="Start Sector Direction", widget=forms.NumberInput(attrs={
+    start_sector_direction = forms.IntegerField(label="Start Sector Direction", min_value=0, max_value=360, widget=forms.NumberInput(attrs={
         "min": 0,
         "max": 360,
         "type": "number",
         "class": "col form-group"
     }))
-    end_sector_direction = forms.IntegerField(label="End Sector Direction", widget=forms.NumberInput(attrs={
+    end_sector_direction = forms.IntegerField(label="End Sector Direction", min_value=0, max_value=360, widget=forms.NumberInput(attrs={
         "min": 0,
         "max": 360,
         "type": "number",
         "class": "col form-group"
     }))
-    start_sector_speed = forms.IntegerField(label="End Sector Direction", widget=forms.NumberInput(attrs={
+    start_sector_speed = forms.IntegerField(label="End Sector Direction", min_value=0, widget=forms.NumberInput(attrs={
         "type": "number",
         "class": "col form-group"
     }))
@@ -42,18 +42,6 @@ class EditForm(forms.ModelForm):
 
     def clean(self):
         cleaned_data = super().clean()
-        signal_speed = cleaned_data.get("signal_speed")
-        signal_direction = cleaned_data.get("signal_direction")
-        start_sector_direction = cleaned_data.get("start_sector_direction")
-        end_sector_direction = cleaned_data.get("end_sector_direction")
-        if signal_speed > 4 or signal_speed < 1:
-            raise forms.ValidationError("Signal Speed must be in [1, 4]")
-        if signal_direction > 4 or signal_direction < 1:
-            raise forms.ValidationError("Signal Direction must be in [1, 4]")
-        if start_sector_direction > 360 or start_sector_direction < 0:
-            raise forms.ValidationError("Start Sector of Direction must be in [0, 360]")
-        if end_sector_direction > 360 or end_sector_direction < 0:
-            raise forms.ValidationError("End Sector Direction must be in [0, 360]")
         return cleaned_data
 
     class Meta:
@@ -62,7 +50,7 @@ class EditForm(forms.ModelForm):
 
 
 class ConstantsForm(EditForm):
-    name = forms.CharField(label="Name", widget=forms.TextInput(attrs={
+    name = forms.CharField(label="Name", max_length=30, widget=forms.TextInput(attrs={
         "class": "form-control"
     }))
 
