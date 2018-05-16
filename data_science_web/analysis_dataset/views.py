@@ -185,21 +185,16 @@ class LogOut(View):
         return redirect(reverse("user"))
 
 
-class CreateAnalysis(View):
+class CreateAnalysis(CreateView):
     form_class = ConstantsForm
+    model = Analysis
     template_name = "analysis_dataset/create_analysis.html"
+    success_url = reverse_lazy("analysis")
 
-    def get(self, request):
-        return render(request, self.template_name, context={"form": self.form_class()})
-
-    def post(self, request):
-        form = self.form_class(request.POST, request.FILES)
-        if form.is_valid():
-            form = form.save(commit=False)
-            form.user = User.objects.get(username=request.user.username)
-            form.save()
-            return redirect(reverse('details', kwargs={"name": form.name}))
-        return redirect(reverse('create'))
+    def form_valid(self, form):
+        form = form.save(commit=False)
+        form.user = User.objects.get(username=self.request.user.username)
+        super().form_valid(form)
 
 
 class CalculateAnalysis(View):
