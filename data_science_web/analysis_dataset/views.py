@@ -135,34 +135,25 @@ class DetailsPage(DetailView):
     slug_field = "name"
 
 
-class RegisterPage(View):
+class RegisterPage(FormView):
     form_class = UserCreationForm
     template_name = "analysis_dataset/register.html"
+    success_url = reverse_lazy("analysis")
 
-    def get(self, request):
-        form = self.form_class()
-        return render(request, self.template_name, context={"form": form})
-
-    def post(self, request):
-        form = self.form_class(request.POST)
-        if form.is_valid():
-            reg = form.clean()
-            if reg["password1"] != reg["password2"]:
-                return render(request, self.template_name, context={"form": form})
-            if User.objects.filter(username=reg["username"]).exists():
-                return render(request, self.template_name, context={"form": form})
+    def form_valid(self, form):
+            reg_form = form.clean()
+            if User.objects.filter(username=reg_form["username"]).exists():
+                super().form_invalid(form)
             new_user = User.objects.create_user(
-                username=reg['username'],
-                password=reg['password1']
+                username=reg_form['username'],
+                password=reg_form['password1']
             )
             new_user.save()
-            login(request, authenticate(
-                username=reg['username'],
-                password=reg['password1']
+            login(self.request, authenticate(
+                username=reg_form['username'],
+                password=reg_form['password1']
             ))
-            return redirect(reverse("user"))
-
-        return render(request, self.template_name, context={"form": form})
+            return super(RegisterPage, self).form_valid(form)
 
 
 class SignInPage(FormView):
