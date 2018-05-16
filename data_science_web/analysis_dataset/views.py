@@ -2,7 +2,7 @@ from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
-from django.http import HttpResponse, Http404
+from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.views import View
 from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
@@ -32,7 +32,7 @@ class AnalysisPage(ListView):
     form_class = SearchForm
     model = Analysis
 
-    def get_context_data(self, **kwargs):
+    def get_context_data(self, **kwargs):  # add get_queryset for validating search_field
         context = super().get_context_data(**kwargs)
         if self.request.GET.get('search_field', None):
             context["analysises"] = (self.model.objects.filter(
@@ -44,116 +44,14 @@ class AnalysisPage(ListView):
         context["form_search"] = self.form_class()
         return context
 
+
 class EditPage(UpdateView):
-
     model = Analysis
-    fields =
-
-    def get_initial(self):
-        pass
-
-    def get_context_data(self, **kwargs):
-            analysis = Analysis.objects.get(name=name)
-            res = ResultAnalysis.objects.filter(analysis=analysis)
-            if res:
-                zip_arc = ZipArchive.objects.filter(analysis=res[0])
-                if zip_arc:
-                    zip_arc[0].delete()
-                res.delete()
-            analysis.date_modification = now()
-            analysis.start_sector_speed = form.cleaned_data["start_sector_speed"]
-            analysis.start_sector_direction = form.cleaned_data["start_sector_direction"]
-            analysis.end_sector_direction = form.cleaned_data["end_sector_direction"]
-            analysis.end_sector_speed = form.cleaned_data["end_sector_speed"]
-            analysis.step_group = form.cleaned_data["step_group"]
-            analysis.signal_direction = form.cleaned_data["signal_direction"]
-            analysis.signal_speed = form.cleaned_data["signal_speed"]
-            analysis.save()
-
-            request.user.user_permissions.add(
-                Permission.objects.get(name="Can Redirect Success")
-            )
-
-            return redirect(reverse("success-edit", kwargs={"name": analysis.name}))
-        pass
-
-    def form_valid(self, form):
-        pass
-
-
-# class EditPage(View):
-#     template_name = "analysis_dataset/edit.html"
-#     form_url = EditForm
-#
-#     def _form_and_content(self, request, name):
-#         query_set_analysis = dict(enumerate(Analysis.objects.all()))
-#         analysis_index = None
-#
-#         for index, analysis in query_set_analysis.items():
-#             if analysis.name == name:
-#                 analysis_index = index
-#
-#         analysis = query_set_analysis.get(analysis_index, None)
-#         if analysis is not None:
-#             form = EditForm(
-#                 initial={
-#                     "name": analysis.name,
-#                     "signal_speed": analysis.signal_speed,
-#                     "signal_direction": analysis.signal_direction,
-#                     "step_group": analysis.step_group,
-#                     "start_sector_direction": analysis.start_sector_direction,
-#                     "end_sector_direction": analysis.end_sector_direction,
-#                     "start_sector_speed": analysis.start_sector_speed,
-#                     "end_sector_speed": analysis.end_sector_speed
-#                 })
-#         else:
-#             raise Http404("Object does not exist")
-#
-#         return render(request, self.template_name, context={
-#             "form": form,
-#             "previous": query_set_analysis.get(
-#                 analysis_index - 1,
-#                 None
-#             ) if analysis_index is not None else analysis_index,
-#             "next": query_set_analysis.get(
-#                 analysis_index + 1,
-#                 None
-#             ) if analysis_index is not None else analysis_index,
-#             "name": name
-#         })
-#
-#     def get(self, request, name):
-#         return self._form_and_content(request, name)
-#
-#     def post(self, request, name):
-#         form = EditForm(data=request.POST)
-#         if form.is_valid():
-#             try:
-#                 analysis = Analysis.objects.get(name=name)
-#                 res = ResultAnalysis.objects.filter(analysis=analysis)
-#                 if res:
-#                     zip_arc = ZipArchive.objects.filter(analysis=res[0])
-#                     if zip_arc:
-#                         zip_arc[0].delete()
-#                     res.delete()
-#                 analysis.date_modification = now()
-#                 analysis.start_sector_speed = form.cleaned_data["start_sector_speed"]
-#                 analysis.start_sector_direction = form.cleaned_data["start_sector_direction"]
-#                 analysis.end_sector_direction = form.cleaned_data["end_sector_direction"]
-#                 analysis.end_sector_speed = form.cleaned_data["end_sector_speed"]
-#                 analysis.step_group = form.cleaned_data["step_group"]
-#                 analysis.signal_direction = form.cleaned_data["signal_direction"]
-#                 analysis.signal_speed = form.cleaned_data["signal_speed"]
-#                 analysis.save()
-#
-#                 request.user.user_permissions.add(
-#                     Permission.objects.get(name="Can Redirect Success")
-#                 )
-#
-#                 return redirect(reverse("success-edit", kwargs={"name": analysis.name}))
-#
-#             except ObjectDoesNotExist:
-#                 raise Http404("Object Does not exist")
+    form_class = EditForm
+    slug_field = "name"
+    slug_url_kwarg = "name"
+    template_name = "analysis_dataset/edit.html"
+    success_url = reverse_lazy("analysis")
 
 
 class SuccessEditPage(PermissionRequiredMixin, View):
@@ -198,19 +96,30 @@ class DownloadZip(View):
             raise Http404("Object does not exist")
 
 
-class DeleteAnalysis(View):
+class DeleteAnalysis(DeleteView):
+    model = Analysis
+    success_url = reverse_lazy("analysis")
+    slug_field = "name"
+    slug_url_kwarg = "name"
 
-    def get(self, _, name):
-        analysis = Analysis.objects.filter(name=name)
-        if analysis:
-            res = ResultAnalysis.objects.filter(analysis=analysis[0])
+    def get(self, request, *args, **kwargs):
+        return self.delete(request, *args, **kwargs)
+
+    def get_queryset(self):
+        return self.model.objects.filter(user=self.request.user)
+
+    def delete(self, request, *args, **kwargs):
+        self.object = self.get_object()
+        if self.object:
+            res = ResultAnalysis.objects.filter(analysis=self.object)
             if res:
                 zip_arc = ZipArchive.objects.filter(analysis=res[0])
                 if zip_arc:
                     zip_arc[0].delete()
                 res[0].delete()
-            analysis[0].delete()
-            return redirect(reverse('analysis'))
+            self.object.delete()
+            success_url = self.get_success_url()
+            return HttpResponseRedirect(success_url)
         raise Http404("Object does not exist")
 
 
