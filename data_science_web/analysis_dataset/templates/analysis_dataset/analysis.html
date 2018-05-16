@@ -36,6 +36,9 @@
         <div class="col">
             {% if analysises %}
                 {% for analysis in analysises %}
+                    {% if request.GET.warning and request.GET.warning == analysis.name %}
+                        <p style="color: darkred; text-align: center">Nothing to archivate</p>
+                    {% endif %}
                     <div class="select-analysis">
                         <div class="row justify-content-center ">
                             Name: {{ analysis.name }}
