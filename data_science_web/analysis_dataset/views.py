@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.views import View
-from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView
+from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView, FormView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -165,24 +165,19 @@ class RegisterPage(View):
         return render(request, self.template_name, context={"form": form})
 
 
-class SignInPage(View):
+class SignInPage(FormView):
     form_class = AuthenticationForm
     template_name = "analysis_dataset/sign_in.html"
+    success_url = reverse_lazy("analysis")
 
-    def get(self, request):
-        form = self.form_class()
-        return render(request, self.template_name, context={"form": form})
+    def form_valid(self, form):
+        login(self.request, authenticate(
+            self.request,
+            username=form.cleaned_data['username'],
+            password=form.cleaned_data['password']
+        ))
+        return super().form_valid(form)
 
-    def post(self, request):
-        form = self.form_class(data=request.POST)
-        if form.is_valid():
-            login(request, authenticate(
-                request,
-                username=form.cleaned_data['username'],
-                password=form.cleaned_data['password']
-            ))
-            return redirect(reverse("user"))
-        return render(request, self.template_name, context={"form": form})
 
 
 class LogOut(View):
