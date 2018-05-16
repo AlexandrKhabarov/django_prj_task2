@@ -1,10 +1,10 @@
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect
+from django.shortcuts import render, redirect, get_object_or_404
 from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.http import HttpResponse, Http404
 from django.views import View
-from django.views.generic import DetailView
+from django.views.generic import DetailView, ListView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -27,22 +27,22 @@ class UserPage(View):
         return render(request, self.template_name)
 
 
-class AnalysisPage(View):
+class AnalysisPage(ListView):
     template_name = "analysis_dataset/analysis.html"
     form_class = SearchForm
+    model = Analysis
 
-    def get(self, request):
-        search_field = request.GET.get('search_field', None)
-        if search_field:
-            return render(request, self.template_name, context={
-                "analysises": Analysis.objects.filter(name__contains=search_field),
-                "form_search": self.form_class(),
-            })
-        return render(request, self.template_name, context={
-            "analysises": Analysis.objects.filter(
-                user=User.objects.get(username=request.user.username)),
-            "form_search": self.form_class()
-        })
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data(**kwargs)
+        if self.request.GET.get('search_field', None):
+            context["analysises"] = (self.model.objects.filter(
+                name__contains=self.request.GET.get('search_field'),
+                user=self.request.user)
+            )
+        else:
+            context["analysises"] = self.model.objects.filter(user=self.request.user)
+        context["form_search"] = self.form_class()
+        return context
 
 
 class EditPage(View):
