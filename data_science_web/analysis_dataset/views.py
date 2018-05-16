@@ -1,10 +1,10 @@
 from django.contrib.auth import authenticate, login, logout
 from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
-from django.utils.timezone import now
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.views import View
-from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView, FormView
+from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView, FormView, \
+    RedirectView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -34,7 +34,7 @@ class AnalysisPage(ListView):
         self.queryset = self.model.objects.filter(user=self.request.user)
         return super(AnalysisPage, self).get_queryset()
 
-    def get_context_data(self, **kwargs):  # add get_queryset for validating search_field
+    def get_context_data(self, **kwargs):
         context = super().get_context_data(**kwargs)
         queryset = self.get_queryset()
         if self.request.GET.get('search_field', None):
@@ -57,16 +57,6 @@ class EditPage(UpdateView):
     slug_url_kwarg = "name"
     template_name = "analysis_dataset/edit.html"
     success_url = reverse_lazy("analysis")
-
-
-class SuccessEditPage(PermissionRequiredMixin, View):
-    template_name = "analysis_dataset/success_page.html"
-    permission_required = "auth.can_redirect_to_the_success_page"
-    login_url = reverse_lazy("user")
-
-    def get(self, request, name):
-        request.user.user_permissions.remove(Permission.objects.get(name="Can Redirect Success"))
-        return render(request, self.template_name, context={"analysis": name})
 
 
 class DownloadZip(View):
@@ -141,19 +131,19 @@ class RegisterPage(FormView):
     success_url = reverse_lazy("analysis")
 
     def form_valid(self, form):
-            reg_form = form.clean()
-            if User.objects.filter(username=reg_form["username"]).exists():
-                super().form_invalid(form)
-            new_user = User.objects.create_user(
-                username=reg_form['username'],
-                password=reg_form['password1']
-            )
-            new_user.save()
-            login(self.request, authenticate(
-                username=reg_form['username'],
-                password=reg_form['password1']
-            ))
-            return super(RegisterPage, self).form_valid(form)
+        reg_form = form.clean()
+        if User.objects.filter(username=reg_form["username"]).exists():
+            super().form_invalid(form)
+        new_user = User.objects.create_user(
+            username=reg_form['username'],
+            password=reg_form['password1']
+        )
+        new_user.save()
+        login(self.request, authenticate(
+            username=reg_form['username'],
+            password=reg_form['password1']
+        ))
+        return super(RegisterPage, self).form_valid(form)
 
 
 class SignInPage(FormView):
@@ -168,7 +158,6 @@ class SignInPage(FormView):
             password=form.cleaned_data['password']
         ))
         return super().form_valid(form)
-
 
 
 class LogOut(View):
@@ -186,9 +175,9 @@ class CreateAnalysis(CreateView):
     success_url = reverse_lazy("analysis")
 
     def form_valid(self, form):
-        form = form.save(commit=False)
-        form.user = User.objects.get(username=self.request.user.username)
-        super().form_valid(form)
+        analysis = form.save(commit=False)
+        analysis.user = User.objects.get(username=self.request.user.username)
+        return super().form_valid(form)
 
 
 class CalculateAnalysis(View):

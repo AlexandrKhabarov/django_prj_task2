@@ -1,6 +1,6 @@
 from django.urls import path
-from .views import UserPage, RegisterPage, SignInPage, LogOut, AnalysisPage, DetailsPage, EditPage, \
-    SuccessEditPage, DownloadZip, DeleteAnalysis, CreateAnalysis, CalculateAnalysis
+from .views import UserPage, RegisterPage, SignInPage, LogOut, AnalysisPage, DetailsPage, EditPage, DownloadZip, \
+    DeleteAnalysis, CreateAnalysis, CalculateAnalysis
 from django.contrib.auth.decorators import login_required
 
 urlpatterns = [
@@ -15,5 +15,4 @@ urlpatterns = [
     path("user/analysis/<str:name>/delete", login_required(DeleteAnalysis.as_view()), name="delete"),
     path("user/analysis/<str:name>/download-zip", login_required(DownloadZip.as_view()), name="download-zip"),
     path("user/analysis/<str:name>/edit/", login_required(EditPage.as_view()), name="edit"),
-    path("user/analysis/<str:name>/edit/success/", login_required(SuccessEditPage.as_view()), name="success-edit"),
 ]
