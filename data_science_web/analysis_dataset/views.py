@@ -28,16 +28,24 @@ class AnalysisPage(ListView):
     template_name = "analysis_dataset/analysis.html"
     form_class = SearchForm
     model = Analysis
+    queryset = None
+
+    def get_queryset(self):
+        self.queryset = self.model.objects.filter(user=self.request.user)
+        return super(AnalysisPage, self).get_queryset()
 
     def get_context_data(self, **kwargs):  # add get_queryset for validating search_field
         context = super().get_context_data(**kwargs)
+        queryset = self.get_queryset()
         if self.request.GET.get('search_field', None):
-            context["analysises"] = (self.model.objects.filter(
-                name__contains=self.request.GET.get('search_field'),
-                user=self.request.user)
+            context["analysises"] = (
+                queryset.filter(
+                    name__contains=self.request.GET.get('search_field'),
+                    user=self.request.user
+                )
             )
         else:
-            context["analysises"] = self.model.objects.filter(user=self.request.user)
+            context["analysises"] = queryset
         context["form_search"] = self.form_class()
         return context
 
