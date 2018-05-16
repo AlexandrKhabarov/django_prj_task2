@@ -4,6 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.http import HttpResponse, Http404
 from django.views import View
+from django.views.generic import DetailView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -176,14 +177,11 @@ class DeleteAnalysis(View):
         raise Http404("Object does not exist")
 
 
-class DetailsPage(View):
+class DetailsPage(DetailView):
     template_name = "analysis_dataset/details.html"
-
-    def get(self, request, name):
-        analysis = Analysis.objects.filter(name=name)
-        if analysis:
-            return render(request, self.template_name, context={"analysis": analysis[0]})
-        raise Http404("Object does not exist")
+    model = Analysis
+    slug_url_kwarg = "name"
+    slug_field = "name"
 
 
 class RegisterPage(View):
