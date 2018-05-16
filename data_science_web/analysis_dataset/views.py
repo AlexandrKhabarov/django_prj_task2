@@ -4,7 +4,7 @@ from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.views import View
-from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
+from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -20,11 +20,8 @@ from .analysis_tools import filter, calculater, graphics
 
 # Create your views here.
 
-class UserPage(View):
+class UserPage(TemplateView):
     template_name = "analysis_dataset/user_page.html"
-
-    def get(self, request):
-        return render(request, self.template_name)
 
 
 class AnalysisPage(ListView):
