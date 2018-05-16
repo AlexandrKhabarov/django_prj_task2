@@ -1,13 +1,12 @@
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect
+from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.views import View
 from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView, FormView, \
     RedirectView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
-from django.contrib.auth.models import User, Permission
-from django.contrib.auth.mixins import PermissionRequiredMixin
+from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 import os
@@ -58,37 +57,58 @@ class EditPage(UpdateView):
     template_name = "analysis_dataset/edit.html"
     success_url = reverse_lazy("analysis")
 
-
-class DownloadZip(View):
-
-    def get(self, _, name):
+    def get_object(self, queryset=None):
+        analysis = super().get_object()
         try:
-            analysis = Analysis.objects.get(name=name)
-            result = ResultAnalysis.objects.get(analysis=analysis)
+            res = ResultAnalysis.objects.get(analysis=analysis)
+            try:
+                zip_arc = ZipArchive.objects.get(analysis=res)
+                zip_arc.delete()
+            except ObjectDoesNotExist:
+                pass
+            res.delete()
+        except ObjectDoesNotExist:
+            pass
+        return analysis
+
+
+class DownloadZip(DetailView):
+    response_class = HttpResponse
+
+    def get_object(self, queryset=None):
+        try:
+            analysis = Analysis.objects.get(name=self.kwargs["name"])
+            try:
+                result = ResultAnalysis.objects.get(analysis=analysis)
+            except ObjectDoesNotExist:
+                return analysis.name
             archive = ZipArchive.objects.filter(
-                name=name,
+                name=self.kwargs["name"],
                 analysis=result
             )
             if not archive:
-                file_name = "{}_{}.zip".format(name, analysis.date_modification)
+                file_name = "{}_{}.zip".format(self.kwargs["name"], analysis.date_modification)
                 base_name_dir = "zip_files"
                 abs_path_dir = os.path.join(settings.MEDIA_ROOT, base_name_dir)
                 if not os.path.exists(abs_path_dir):
                     os.mkdir(abs_path_dir)
                 compress_zip(os.path.join(abs_path_dir, file_name), get_all_abs_path(result))
                 archive = ZipArchive()
-                archive.name = name
+                archive.name = self.kwargs["name"]
                 archive.analysis = result
                 archive.zip_file = os.path.join(base_name_dir, file_name)
                 archive.save()
-
-            response = HttpResponse(archive[0].zip_file if hasattr(archive, "__iter__") else archive.zip_file)
-            response["Content-Disposition"] = 'attachment; filename="{}"'.format(
-                archive[0].zip_file.name if hasattr(archive, "__iter__") else archive.zip_file.name
-            )
-            return response
+            return archive
         except ObjectDoesNotExist:
             raise Http404("Object does not exist")
+
+    def render_to_response(self, context, **response_kwargs):
+        archive = context.get("object")[0] if hasattr(context.get("object"), "__iter__") else context.get("object")
+        if isinstance(archive, ZipArchive):
+            response = self.response_class(archive)
+            response["Content-Disposition"] = 'attachment; filename="{}"'.format(archive.zip_file.name)
+            return response
+        return HttpResponseRedirect(reverse("analysis") + "?warning=" + context.get("object"))
 
 
 class DeleteAnalysis(DeleteView):
