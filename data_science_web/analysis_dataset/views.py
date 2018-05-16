@@ -27,26 +27,22 @@ class AnalysisPage(ListView):
     template_name = "analysis_dataset/analysis.html"
     form_class = SearchForm
     model = Analysis
-    queryset = None
+    paginate_by = 1
+    context_object_name = "analysises"
 
     def get_queryset(self):
-        self.queryset = self.model.objects.filter(user=self.request.user)
-        return super(AnalysisPage, self).get_queryset()
+        return super(AnalysisPage, self).get_queryset().filter(user=self.request.user)
 
     def get_context_data(self, **kwargs):
-        context = super().get_context_data(**kwargs)
         queryset = self.get_queryset()
         if self.request.GET.get('search_field', None):
-            context["analysises"] = (
+            queryset = (
                 queryset.filter(
                     name__contains=self.request.GET.get('search_field'),
                     user=self.request.user
                 )
             )
-        else:
-            context["analysises"] = queryset
-        context["form_search"] = self.form_class()
-        return context
+        return super().get_context_data(object_list=queryset, form_search=self.form_class())
 
 
 class EditPage(UpdateView):
