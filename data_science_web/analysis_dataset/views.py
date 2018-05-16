@@ -1,10 +1,10 @@
 from django.contrib.auth import authenticate, login, logout
-from django.shortcuts import render, redirect, get_object_or_404
+from django.shortcuts import render, redirect
 from django.urls import reverse, reverse_lazy
 from django.utils.timezone import now
 from django.http import HttpResponse, Http404
 from django.views import View
-from django.views.generic import DetailView, ListView
+from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User, Permission
 from django.contrib.auth.mixins import PermissionRequiredMixin
@@ -44,79 +44,116 @@ class AnalysisPage(ListView):
         context["form_search"] = self.form_class()
         return context
 
+class EditPage(UpdateView):
 
-class EditPage(View):
-    template_name = "analysis_dataset/edit.html"
+    model = Analysis
+    fields =
 
-    def _form_and_content(self, request, name):
-        query_set_analysis = dict(enumerate(Analysis.objects.all()))
-        analysis_index = None
+    def get_initial(self):
+        pass
 
-        for index, analysis in query_set_analysis.items():
-            if analysis.name == name:
-                analysis_index = index
+    def get_context_data(self, **kwargs):
+            analysis = Analysis.objects.get(name=name)
+            res = ResultAnalysis.objects.filter(analysis=analysis)
+            if res:
+                zip_arc = ZipArchive.objects.filter(analysis=res[0])
+                if zip_arc:
+                    zip_arc[0].delete()
+                res.delete()
+            analysis.date_modification = now()
+            analysis.start_sector_speed = form.cleaned_data["start_sector_speed"]
+            analysis.start_sector_direction = form.cleaned_data["start_sector_direction"]
+            analysis.end_sector_direction = form.cleaned_data["end_sector_direction"]
+            analysis.end_sector_speed = form.cleaned_data["end_sector_speed"]
+            analysis.step_group = form.cleaned_data["step_group"]
+            analysis.signal_direction = form.cleaned_data["signal_direction"]
+            analysis.signal_speed = form.cleaned_data["signal_speed"]
+            analysis.save()
 
-        analysis = query_set_analysis.get(analysis_index, None)
-        if analysis is not None:
-            form = EditForm(
-                initial={
-                    "name": analysis.name,
-                    "signal_speed": analysis.signal_speed,
-                    "signal_direction": analysis.signal_direction,
-                    "step_group": analysis.step_group,
-                    "start_sector_direction": analysis.start_sector_direction,
-                    "end_sector_direction": analysis.end_sector_direction,
-                    "start_sector_speed": analysis.start_sector_speed,
-                    "end_sector_speed": analysis.end_sector_speed
-                })
-        else:
-            raise Http404("Object does not exist")
+            request.user.user_permissions.add(
+                Permission.objects.get(name="Can Redirect Success")
+            )
 
-        return render(request, self.template_name, context={
-            "form": form,
-            "previous": query_set_analysis.get(
-                analysis_index - 1,
-                None
-            ) if analysis_index is not None else analysis_index,
-            "next": query_set_analysis.get(
-                analysis_index + 1,
-                None
-            ) if analysis_index is not None else analysis_index,
-            "name": name
-        })
+            return redirect(reverse("success-edit", kwargs={"name": analysis.name}))
+        pass
 
-    def get(self, request, name):
-        return self._form_and_content(request, name)
+    def form_valid(self, form):
+        pass
 
-    def post(self, request, name):
-        form = EditForm(data=request.POST)
-        if form.is_valid():
-            try:
-                analysis = Analysis.objects.get(name=name)
-                res = ResultAnalysis.objects.filter(analysis=analysis)
-                if res:
-                    zip_arc = ZipArchive.objects.filter(analysis=res[0])
-                    if zip_arc:
-                        zip_arc[0].delete()
-                    res.delete()
-                analysis.date_modification = now()
-                analysis.start_sector_speed = form.cleaned_data["start_sector_speed"]
-                analysis.start_sector_direction = form.cleaned_data["start_sector_direction"]
-                analysis.end_sector_direction = form.cleaned_data["end_sector_direction"]
-                analysis.end_sector_speed = form.cleaned_data["end_sector_speed"]
-                analysis.step_group = form.cleaned_data["step_group"]
-                analysis.signal_direction = form.cleaned_data["signal_direction"]
-                analysis.signal_speed = form.cleaned_data["signal_speed"]
-                analysis.save()
 
-                request.user.user_permissions.add(
-                    Permission.objects.get(name="Can Redirect Success")
-                )
-
-                return redirect(reverse("success-edit", kwargs={"name": analysis.name}))
-
-            except ObjectDoesNotExist:
-                raise Http404("Object Does not exist")
+# class EditPage(View):
+#     template_name = "analysis_dataset/edit.html"
+#     form_url = EditForm
+#
+#     def _form_and_content(self, request, name):
+#         query_set_analysis = dict(enumerate(Analysis.objects.all()))
+#         analysis_index = None
+#
+#         for index, analysis in query_set_analysis.items():
+#             if analysis.name == name:
+#                 analysis_index = index
+#
+#         analysis = query_set_analysis.get(analysis_index, None)
+#         if analysis is not None:
+#             form = EditForm(
+#                 initial={
+#                     "name": analysis.name,
+#                     "signal_speed": analysis.signal_speed,
+#                     "signal_direction": analysis.signal_direction,
+#                     "step_group": analysis.step_group,
+#                     "start_sector_direction": analysis.start_sector_direction,
+#                     "end_sector_direction": analysis.end_sector_direction,
+#                     "start_sector_speed": analysis.start_sector_speed,
+#                     "end_sector_speed": analysis.end_sector_speed
+#                 })
+#         else:
+#             raise Http404("Object does not exist")
+#
+#         return render(request, self.template_name, context={
+#             "form": form,
+#             "previous": query_set_analysis.get(
+#                 analysis_index - 1,
+#                 None
+#             ) if analysis_index is not None else analysis_index,
+#             "next": query_set_analysis.get(
+#                 analysis_index + 1,
+#                 None
+#             ) if analysis_index is not None else analysis_index,
+#             "name": name
+#         })
+#
+#     def get(self, request, name):
+#         return self._form_and_content(request, name)
+#
+#     def post(self, request, name):
+#         form = EditForm(data=request.POST)
+#         if form.is_valid():
+#             try:
+#                 analysis = Analysis.objects.get(name=name)
+#                 res = ResultAnalysis.objects.filter(analysis=analysis)
+#                 if res:
+#                     zip_arc = ZipArchive.objects.filter(analysis=res[0])
+#                     if zip_arc:
+#                         zip_arc[0].delete()
+#                     res.delete()
+#                 analysis.date_modification = now()
+#                 analysis.start_sector_speed = form.cleaned_data["start_sector_speed"]
+#                 analysis.start_sector_direction = form.cleaned_data["start_sector_direction"]
+#                 analysis.end_sector_direction = form.cleaned_data["end_sector_direction"]
+#                 analysis.end_sector_speed = form.cleaned_data["end_sector_speed"]
+#                 analysis.step_group = form.cleaned_data["step_group"]
+#                 analysis.signal_direction = form.cleaned_data["signal_direction"]
+#                 analysis.signal_speed = form.cleaned_data["signal_speed"]
+#                 analysis.save()
+#
+#                 request.user.user_permissions.add(
+#                     Permission.objects.get(name="Can Redirect Success")
+#                 )
+#
+#                 return redirect(reverse("success-edit", kwargs={"name": analysis.name}))
+#
+#             except ObjectDoesNotExist:
+#                 raise Http404("Object Does not exist")
 
 
 class SuccessEditPage(PermissionRequiredMixin, View):
