@@ -3,8 +3,8 @@ from django.shortcuts import redirect
 from django.urls import reverse, reverse_lazy
 from django.http import HttpResponse, Http404, HttpResponseRedirect
 from django.views import View
-from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView, FormView, \
-    RedirectView
+from django.views.generic import DetailView, ListView, CreateView, UpdateView, DeleteView, TemplateView, FormView
+from django.views.generic.edit import ModelFormMixin
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
@@ -44,7 +44,7 @@ class AnalysisPage(ListView):
         return super().get_context_data(object_list=queryset, form_search=self.form_class())
 
 
-class EditPage(UpdateView):
+class EditPage(UpdateView):  # todo add calculation ability past edit
     model = Analysis
     form_class = EditForm
     slug_field = "name"
@@ -52,10 +52,9 @@ class EditPage(UpdateView):
     template_name = "analysis_dataset/edit.html"
     success_url = reverse_lazy("analysis")
 
-    def get_object(self, queryset=None):
-        analysis = super().get_object()
+    def form_valid(self, form):
         try:
-            res = ResultAnalysis.objects.get(analysis=analysis)
+            res = ResultAnalysis.objects.get(analysis=form.instance)
             try:
                 zip_arc = ZipArchive.objects.get(analysis=res)
                 zip_arc.delete()
@@ -64,7 +63,28 @@ class EditPage(UpdateView):
             res.delete()
         except ObjectDoesNotExist:
             pass
-        return analysis
+
+        result_analysis = ResultAnalysis()
+
+        try:
+            managers.ApplicationManager().go(
+                form.instance,
+                result_analysis,
+                settings.MEDIA_ROOT,
+                "with_density",
+                "group_data_frame",
+                "density_graph",
+                "hist_graph",
+                "dot_graphs",
+                "rose_graph"
+            )
+        except Exception as e:
+            form.errors["error"] = e
+            return super().form_invalid(form)
+        success_url = super().form_valid(form)
+        result_analysis.analysis = self.object
+        result_analysis.save()
+        return super(ModelFormMixin, self).form_valid(success_url)
 
 
 class DownloadZip(DetailView):
@@ -191,16 +211,8 @@ class CreateAnalysis(CreateView):
 
     def form_valid(self, form):
         analysis = form.save(commit=False)
-        analysis.user = User.objects.get(username=self.request.user.username)
-        return super().form_valid(form)
-
-
-class CalculateAnalysis(View):# Use calculate chunck in create and update forms (delete CalculateAnalysis view)
-    def get(self, _, name):
+        result_analysis = ResultAnalysis()
         try:
-            analysis = Analysis.objects.get(name=name)
-            result_analysis = ResultAnalysis()
-
             managers.ApplicationManager().go(
                 analysis,
                 result_analysis,
@@ -212,11 +224,13 @@ class CalculateAnalysis(View):# Use calculate chunck in create and update forms 
                 "dot_graphs",
                 "rose_graph"
             )
+        except Exception as e:
+            form.errors["error"] = e
+            return super().form_invalid(form)
+        analysis.user = User.objects.get(username=self.request.user.username)
+        analysis.save()
+        result_analysis.analysis = analysis
+        result_analysis.save()
+        return super().form_valid(form)
 
-            result_analysis.analysis = analysis
-            result_analysis.save()
 
-            return redirect(reverse('analysis'))
-
-        except ObjectDoesNotExist:
-            raise Http404("object does not exist")
