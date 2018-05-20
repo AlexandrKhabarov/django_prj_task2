@@ -47,7 +47,10 @@ class ApplicationManager:
         )
 
     def _manipulate_data_frame(self, analysis):
-        df = pd.read_csv(analysis.data_set.path, engine="python", sep=None, index_col="Timestamp")
+        try:
+            df = pd.read_csv(analysis.data_set.path, engine="python", sep=None, index_col="Timestamp")
+        except FileNotFoundError:
+            df = pd.read_csv(analysis.data_set, engine="c", sep=";", index_col="Timestamp")
 
         df = self.filtration.del_empty_rows(df)
         df = self.filtration.del_duplicate(df)
