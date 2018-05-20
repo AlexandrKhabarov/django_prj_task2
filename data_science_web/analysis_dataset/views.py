@@ -29,22 +29,16 @@ class AnalysisPage(ListView):
     paginate_by = 10
     context_object_name = "analysises"
 
-    def get_queryset(self):
-        return super(AnalysisPage, self).get_queryset().filter(user=self.request.user)
-
     def get_context_data(self, **kwargs):
-        queryset = self.get_queryset()
+        queryset = self.get_queryset().filter(user=self.request.user)
         if self.request.GET.get('search_field', None):
-            queryset = (
-                queryset.filter(
-                    name__contains=self.request.GET.get('search_field'),
-                    user=self.request.user
-                )
+            queryset = queryset.filter(
+                name__contains=self.request.GET.get('search_field'),
             )
         return super().get_context_data(object_list=queryset, form_search=self.form_class())
 
 
-class EditPage(UpdateView):  # todo add calculation ability past edit
+class EditPage(UpdateView):
     model = Analysis
     form_class = EditForm
     slug_field = "name"
@@ -232,5 +226,3 @@ class CreateAnalysis(CreateView):
         result_analysis.analysis = analysis
         result_analysis.save()
         return super().form_valid(form)
-
-
