@@ -52,10 +52,9 @@ class ResultAnalysis(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         for file_name in self.__dict__.keys():
-            try:  # todo check if field is child of FileField
-                operator.attrgetter(file_name)(self).delete()
-            except Exception:
-                pass
+            field_result = operator.attrgetter(file_name)(self)
+            if isinstance(field_result, models.FileField):
+                field_result.delete()
         super(ResultAnalysis, self).delete(using, keep_parents)
 
 
