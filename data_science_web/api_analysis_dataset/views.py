@@ -31,6 +31,5 @@ class AnalysisDownload(generics.ListAPIView):
     queryset = Analysis.objects.all()
 
 
-
 class AnalysisDownloadDetail(generics.ListAPIView):
-    pass
+    queryset = Analysis.objects.all()
