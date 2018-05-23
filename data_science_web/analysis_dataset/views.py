@@ -114,8 +114,8 @@ class DownloadZip(DetailView):
     def render_to_response(self, context, **response_kwargs):
         archive = context.get("object")[0] if hasattr(context.get("object"), "__iter__") else context.get("object")
         if isinstance(archive, ZipArchive):
-            response = self.response_class(archive)
-            response["Content-Disposition"] = 'attachment; filename="{}"'.format(archive.zip_file.name)
+            response = self.response_class(archive.zip_file.read(), content_type='application/zip')
+            response["Content-Disposition"] = 'attachment; filename="{}"'.format(os.path.basename(archive.zip_file.name))
             return response
         return HttpResponseRedirect(reverse("analysis") + "?warning=" + context.get("object"))
 

@@ -1,7 +1,8 @@
 from django.utils.timezone import now
+from collections import OrderedDict
 from rest_framework.exceptions import ValidationError
 from rest_framework import serializers
-from analysis_dataset.models import Analysis
+from analysis_dataset.models import Analysis, ZipArchive
 from .exceptions import CustomHTTPException
 
 
@@ -67,3 +68,17 @@ class SerializerAnalysis(SerializerAnalysisDetail):
         lookup_field = "name"
         model = Analysis
         fields = '__all__'
+
+
+class DownloadZipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZipArchive
+        lookup_field = "name"
+        fields = ["zip_file"]
+
+
+class DownloadAllZipSerializer(serializers.ModelSerializer):
+    class Meta:
+        model = ZipArchive
+        fields = ["zip_file"]
+        lookup_field = "name"
