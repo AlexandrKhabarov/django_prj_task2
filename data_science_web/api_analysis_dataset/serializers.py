@@ -102,7 +102,7 @@ class SerializerAnalysis(serializers.ModelSerializer):
                 many_to_many[field_name] = validated_data.pop(field_name)
 
         try:
-            instance = ModelClass.objects.create(**validated_data)
+            instance = ModelClass(**validated_data)
         except TypeError:
             tb = traceback.format_exc()
             msg = (
@@ -141,8 +141,9 @@ class SerializerAnalysis(serializers.ModelSerializer):
         compress_zip(os.path.join(abs_path_dir, file_name), get_all_abs_paths(instance.result_analysis))
         archive = ZipArchive()
         archive.name = validated_data["name"]
-        archive.analysis = instance
         archive.zip_file = os.path.join(base_name_dir, file_name)
+        instance.save()
+        archive.analysis = instance
         archive.save()
         return instance
 
