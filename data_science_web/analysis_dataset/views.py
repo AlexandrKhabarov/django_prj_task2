@@ -11,7 +11,7 @@ from django.core.exceptions import ObjectDoesNotExist
 from django.conf import settings
 import os
 from .forms import ConstantsForm, EditForm, SearchForm
-from .models import Analysis, ResultAnalysis, ZipArchive
+from .models import Analysis, ZipArchive
 from .help_functions import get_all_abs_path, compress_zip
 from .analysis_tools import managers
 
@@ -205,24 +205,15 @@ class CreateAnalysis(CreateView):
 
     def form_valid(self, form):
         analysis = form.save(commit=False)
-        result_analysis = ResultAnalysis()
         try:
             managers.ApplicationManager().go(
                 analysis,
-                result_analysis,
                 settings.MEDIA_ROOT,
-                "with_density",
-                "group_data_frame",
-                "density_graph",
-                "hist_graph",
-                "dot_graphs",
-                "rose_graph"
             )
         except Exception as e:
             form.errors["error"] = e
             return super().form_invalid(form)
         analysis.user = User.objects.get(username=self.request.user.username)
+        analysis.result_analysis = os.path.join(settings.MEDIA_ROOT, analysis.name)
         analysis.save()
-        result_analysis.analysis = analysis
-        result_analysis.save()
         return super().form_valid(form)

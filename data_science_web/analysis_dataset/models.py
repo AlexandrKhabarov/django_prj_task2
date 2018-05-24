@@ -3,6 +3,7 @@ from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
 from django.contrib.auth.models import User
 from django.core.files.base import File
+import os
 from django.utils.timezone import now
 from .validators import greater_zero
 
@@ -25,6 +26,7 @@ class Analysis(models.Model):
     )
     start_sector_speed = models.IntegerField(validators=[MinValueValidator(0)])
     end_sector_speed = models.IntegerField(validators=[MinValueValidator(0)])
+    result_analysis = models.FilePathField(blank=True)
     user = models.ForeignKey(User, on_delete=models.CASCADE)
 
     def __str__(self):
@@ -35,34 +37,40 @@ class Analysis(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         self.data_set.delete()
+        self.delete_results_analysis()
         super(Analysis, self).delete(using, keep_parents)
 
+    def delete_results_analysis(self):
+        for analysis_file in os.listdir(self.result_analysis):
+            os.remove(analysis_file)
+        os.remove(self.result_analysis)
 
-class ResultAnalysis(models.Model):
-    group_data_frame = models.FileField(upload_to="group_data_frame/")
-    with_density = models.FileField(upload_to="with_density/")
-    dot_graph = models.ImageField(upload_to="dot_graphs/")
-    rose_graph = models.ImageField(upload_to="rose_graph/")
-    hist_graph = models.ImageField(upload_to="hist_graph/")
-    density_graph = models.ImageField(upload_to="density_graph/")
 
-    analysis = models.ForeignKey(Analysis, on_delete=models.CASCADE)
-
-    def __str__(self):
-        return self.analysis.name
-
-    def delete(self, using=None, keep_parents=False):
-        for file_name in self.__dict__.keys():
-            field_result = operator.attrgetter(file_name)(self)
-            if isinstance(field_result, File):
-                field_result.delete()
-        super(ResultAnalysis, self).delete(using, keep_parents)
+# class ResultAnalysis(models.Model):
+#     group_data_frame = models.FileField(upload_to="group_data_frame/")
+#     with_density = models.FileField(upload_to="with_density/")
+#     dot_graph = models.ImageField(upload_to="dot_graphs/")
+#     rose_graph = models.ImageField(upload_to="rose_graph/")
+#     hist_graph = models.ImageField(upload_to="hist_graph/")
+#     density_graph = models.ImageField(upload_to="density_graph/")
+#
+#     analysis = models.ForeignKey(Analysis, on_delete=models.CASCADE)
+#
+#     def __str__(self):
+#         return self.analysis.name
+#
+#     def delete(self, using=None, keep_parents=False):
+#         for file_name in self.__dict__.keys():
+#             field_result = operator.attrgetter(file_name)(self)
+#             if isinstance(field_result, File):
+#                 field_result.delete()
+#         super(ResultAnalysis, self).delete(using, keep_parents)
 
 
 class ZipArchive(models.Model):
     name = models.CharField(max_length=30)
     zip_file = models.FileField(upload_to="zip_files/")
-    analysis = models.OneToOneField(ResultAnalysis, on_delete=models.CASCADE)
+    analysis = models.OneToOneField(Analysis, on_delete=models.CASCADE)
 
     class Meta:
         unique_together = (("name", "analysis"),)
