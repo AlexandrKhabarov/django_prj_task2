@@ -12,6 +12,8 @@ class SerializerAnalysisDetail(serializers.ModelSerializer):
             if analysis_option not in self.Meta.fields:
                 raise CustomHTTPException
             return super().is_valid(raise_exception)
+        else:
+            raise CustomHTTPException
 
     def update(self, instance, validated_data):
         validated_data["date_modification"] = now()
