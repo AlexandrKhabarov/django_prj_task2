@@ -46,7 +46,7 @@ class EditForm(forms.ModelForm):
 
     class Meta:
         model = Analysis
-        exclude = ["date_create", "date_modification", "user", "data_set", "name"]
+        exclude = ["date_create", "date_modification", "user", "data_set", "name", "result_analysis"]
 
 
 class ConstantsForm(EditForm):

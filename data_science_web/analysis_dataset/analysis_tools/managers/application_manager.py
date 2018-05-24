@@ -14,37 +14,21 @@ class ApplicationManager:
     def go(
             self,
             analysis,
-            result_analysis,
             media_root,
-            with_density_dir,
-            group_density_dir,
-            density_graph_dir,
-            hist_graph_dir,
-            dot_graphs_dir,
-            rose_graphs_dir,
     ):
+        analysis_folder = os.path.join(media_root, analysis.name)
+        if not os.path.exists(analysis_folder):
+            os.mkdir(analysis_folder)
+
         df, grouped_df = self._manipulate_data_frame(analysis)
         self._create_graphic(
             df,
             grouped_df,
-            media_root,
+            analysis_folder,
             analysis,
-            result_analysis,
-            density_graph_dir,
-            hist_graph_dir,
-            dot_graphs_dir,
-            rose_graphs_dir
         )
-        result_analysis.with_density = self._write_result(
-            media_root,
-            os.path.join(with_density_dir, "{}.csv".format(analysis.name)),
-            df
-        )
-        result_analysis.group_data_frame = self._write_result(
-            media_root,
-            os.path.join(group_density_dir, "{}.csv".format(analysis.name)),
-            grouped_df
-        )
+        self._write_result(media_root, f"{analysis.name}/without_grouping_{analysis.name}.csv", df)
+        self._write_result(media_root, f"{analysis.name}/grouping_data_frame_{analysis.name}.csv", grouped_df)
 
     def _manipulate_data_frame(self, analysis):
         try:
@@ -82,72 +66,38 @@ class ApplicationManager:
     def _create_graphic(
             df,
             grouped_df,
-            media_root,
+            analysis_folder,
             analysis,
-            result_analysis,
-            density_graph_dir,
-            hist_graph_dir,
-            dot_graph_dir,
-            rose_graph_dir
     ):
-        grp = GraphManager(media_root)
-
-        base_name_dot_graph = os.path.join(dot_graph_dir, "{}.png".format(analysis.name))
-
-        if not os.path.exists(os.path.join(media_root, dot_graph_dir)):
-            os.mkdir(os.path.join(media_root, dot_graph_dir))
+        grp = GraphManager(analysis_folder)
 
         grp.dot_graph(
             "WD_{}".format(analysis.signal_direction),
             "WS_{}".format(analysis.signal_speed),
             df,
             grouped_df,
-            base_name_dot_graph,
+            os.path.join(analysis_folder, "dot_{}.png".format(analysis.name))
         )
-
-        result_analysis.dot_graph = base_name_dot_graph
-
-        base_name_rose_graph = os.path.join(rose_graph_dir, "{}.png".format(analysis.name))
-
-        if not os.path.exists(os.path.join(media_root, rose_graph_dir)):
-            os.mkdir(os.path.join(media_root, rose_graph_dir))
 
         grp.rose_graph(
             df,
             "WD_{}".format(analysis.signal_direction),
             analysis.step_group,
-            base_name_rose_graph
+            os.path.join(analysis_folder, "rose_{}.png".format(analysis.name))
         )
-        result_analysis.rose_graph = base_name_rose_graph
-
-        base_name_hist_graph = os.path.join(hist_graph_dir, "{}.png".format(analysis.name))
-
-        if not os.path.exists(os.path.join(media_root, hist_graph_dir)):
-            os.mkdir(os.path.join(media_root, hist_graph_dir))
 
         grp.hist_graph(
             df,
             "WS_{}".format(analysis.signal_speed),
-            base_name_hist_graph,
+            os.path.join(analysis_folder, "hist_{}.png".format(analysis.name)),
         )
-        result_analysis.hist_graph = base_name_hist_graph
-
-        basename_density_graph = os.path.join(density_graph_dir, "{}.png".format(analysis.name))
-
-        if not os.path.exists(os.path.join(media_root, density_graph_dir)):
-            os.mkdir(os.path.join(media_root, density_graph_dir))
 
         grp.density_graph(
             df,
-            basename_density_graph
+            os.path.join(analysis_folder, "density_{}.png".format(analysis.name)),
         )
-        result_analysis.density_graph = basename_density_graph
 
     @staticmethod
-    def _write_result(media_dir, base_name,  df):
-        abs_path = os.path.join(media_dir, base_name)
-        if not os.path.exists(os.path.dirname(abs_path)):
-            os.mkdir(os.path.dirname(abs_path))
+    def _write_result(media_dir, csv_name, df):
+        abs_path = os.path.join(media_dir, csv_name)
         df.to_csv(abs_path)
-        return base_name
-
