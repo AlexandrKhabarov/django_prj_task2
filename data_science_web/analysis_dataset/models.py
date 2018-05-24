@@ -2,6 +2,7 @@ import operator
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
 from django.contrib.auth.models import User
+from django.core.files.base import File
 from django.utils.timezone import now
 from .validators import greater_zero
 
@@ -53,7 +54,7 @@ class ResultAnalysis(models.Model):
     def delete(self, using=None, keep_parents=False):
         for file_name in self.__dict__.keys():
             field_result = operator.attrgetter(file_name)(self)
-            if isinstance(field_result, models.FileField):
+            if isinstance(field_result, File):
                 field_result.delete()
         super(ResultAnalysis, self).delete(using, keep_parents)
 

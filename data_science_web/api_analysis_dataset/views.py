@@ -63,7 +63,7 @@ class AnalysisDownload(generics.ListAPIView):
         return self.download(request, *args, **kwargs)
 
 
-class AnalysisDownloadDetail(generics.RetrieveAPIView):
+class AnalysisDownloadDetail(generics.RetrieveAPIView): # todo add calculation and zip construct
     queryset = ZipArchive.objects.all()
     lookup_field = "name"
     serializer_class = DownloadZipSerializer
