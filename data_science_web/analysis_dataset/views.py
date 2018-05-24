@@ -26,11 +26,11 @@ class AnalysisPage(ListView):
     template_name = "analysis_dataset/analysis.html"
     form_class = SearchForm
     model = Analysis
-    paginate_by = 10
+    paginate_by = 1
     context_object_name = "analysises"
 
     def get_context_data(self, **kwargs):
-        queryset = self.get_queryset().filter(user=self.request.user)
+        queryset = self.object_list.filter(user=self.request.user)
         if self.request.GET.get('search_field', None):
             queryset = queryset.filter(
                 name__contains=self.request.GET.get('search_field'),
@@ -113,7 +113,7 @@ class DeleteAnalysis(DeleteView):
         return self.delete(request, *args, **kwargs)
 
     def get_queryset(self):
-        return self.model.objects.filter(user=self.request.user)
+        return super().get_queryset().filter(user=self.request.user)
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
