@@ -1,7 +1,7 @@
 from rest_framework import generics
 from rest_framework.response import Response
 from rest_framework.status import HTTP_200_OK
-from analysis_dataset.models import Analysis, ResultAnalysis, ZipArchive
+from analysis_dataset.models import Analysis, ZipArchive
 from .serializers import SerializerAnalysis, SerializerAnalysisDetail, DownloadZipSerializer, DownloadAllZipSerializer
 
 

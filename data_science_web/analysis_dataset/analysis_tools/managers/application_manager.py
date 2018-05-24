@@ -27,8 +27,8 @@ class ApplicationManager:
             analysis_folder,
             analysis,
         )
-        self._write_result(media_root, f"without_grouping_{analysis.name}.csv", df)
-        self._write_result(media_root, f"grouping_data_frame_{analysis.name}.csv", grouped_df)
+        self._write_result(media_root, f"{analysis.name}/without_grouping_{analysis.name}.csv", df)
+        self._write_result(media_root, f"{analysis.name}/grouping_data_frame_{analysis.name}.csv", grouped_df)
 
     def _manipulate_data_frame(self, analysis):
         try:

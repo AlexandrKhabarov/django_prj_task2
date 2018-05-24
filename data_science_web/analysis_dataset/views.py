@@ -12,7 +12,7 @@ from django.conf import settings
 import os
 from .forms import ConstantsForm, EditForm, SearchForm
 from .models import Analysis, ZipArchive
-from .help_functions import get_all_abs_path, compress_zip
+from .help_functions import get_all_abs_paths, compress_zip
 from .analysis_tools import managers
 
 
@@ -48,36 +48,19 @@ class EditPage(UpdateView):
 
     def form_valid(self, form):
         try:
-            res = ResultAnalysis.objects.get(analysis=form.instance)
-            try:
-                zip_arc = ZipArchive.objects.get(analysis=res)
-                zip_arc.delete()
-            except ObjectDoesNotExist:
-                pass
-            res.delete()
+            zip_arc = ZipArchive.objects.get(analysis=form.instance)
+            zip_arc.delete()
         except ObjectDoesNotExist:
             pass
-
-        result_analysis = ResultAnalysis()
-
         try:
             managers.ApplicationManager().go(
                 form.instance,
-                result_analysis,
                 settings.MEDIA_ROOT,
-                "with_density",
-                "group_data_frame",
-                "density_graph",
-                "hist_graph",
-                "dot_graphs",
-                "rose_graph"
             )
         except Exception as e:
             form.errors["error"] = e
             return super().form_invalid(form)
         success_url = super().form_valid(form)
-        result_analysis.analysis = self.object
-        result_analysis.save()
         return super(ModelFormMixin, self).form_valid(success_url)
 
 
@@ -86,14 +69,13 @@ class DownloadZip(DetailView):
 
     def get_object(self, queryset=None):
         try:
-            analysis = Analysis.objects.get(name=self.kwargs["name"])
             try:
-                result = ResultAnalysis.objects.get(analysis=analysis)
+                analysis = Analysis.objects.get(name=self.kwargs["name"])
             except ObjectDoesNotExist:
-                return analysis.name
+                raise Http404("Analysis does not exist")
             archive = ZipArchive.objects.filter(
                 name=self.kwargs["name"],
-                analysis=result
+                analysis=analysis
             )
             if not archive:
                 file_name = "{}_{}.zip".format(self.kwargs["name"], analysis.date_modification)
@@ -101,10 +83,10 @@ class DownloadZip(DetailView):
                 abs_path_dir = os.path.join(settings.MEDIA_ROOT, base_name_dir)
                 if not os.path.exists(abs_path_dir):
                     os.mkdir(abs_path_dir)
-                compress_zip(os.path.join(abs_path_dir, file_name), get_all_abs_path(result))
+                compress_zip(os.path.join(abs_path_dir, file_name), get_all_abs_paths(analysis.result_analysis))
                 archive = ZipArchive()
                 archive.name = self.kwargs["name"]
-                archive.analysis = result
+                archive.analysis = analysis
                 archive.zip_file = os.path.join(base_name_dir, file_name)
                 archive.save()
             return archive
@@ -115,7 +97,8 @@ class DownloadZip(DetailView):
         archive = context.get("object")[0] if hasattr(context.get("object"), "__iter__") else context.get("object")
         if isinstance(archive, ZipArchive):
             response = self.response_class(archive.zip_file.read(), content_type='application/zip')
-            response["Content-Disposition"] = 'attachment; filename="{}"'.format(os.path.basename(archive.zip_file.name))
+            response["Content-Disposition"] = 'attachment; filename="{}"'.format(
+                os.path.basename(archive.zip_file.name))
             return response
         return HttpResponseRedirect(reverse("analysis") + "?warning=" + context.get("object"))
 
@@ -135,12 +118,9 @@ class DeleteAnalysis(DeleteView):
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
         if self.object:
-            res = ResultAnalysis.objects.filter(analysis=self.object)
-            if res:
-                zip_arc = ZipArchive.objects.filter(analysis=res[0])
-                if zip_arc:
-                    zip_arc[0].delete()
-                res[0].delete()
+            zip_arc = ZipArchive.objects.filter(analysis=self.object)
+            if zip_arc:
+                zip_arc[0].delete()
             self.object.delete()
             success_url = self.get_success_url()
             return HttpResponseRedirect(success_url)
