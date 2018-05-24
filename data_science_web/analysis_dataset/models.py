@@ -1,6 +1,6 @@
 import operator
 from django.db import models
-from django.core.validators import MaxValueValidator, MinValueValidator
+from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
 from django.contrib.auth.models import User
 from django.utils.timezone import now
 from .validators import greater_zero
@@ -9,7 +9,7 @@ from .validators import greater_zero
 # Create your models here.
 
 class Analysis(models.Model):
-    name = models.CharField(max_length=30, unique=True)
+    name = models.CharField(max_length=30, unique=True, validators=[MinLengthValidator(3)])
     date_create = models.DateField(default=now)
     date_modification = models.DateField(default=now)
     data_set = models.FileField(upload_to="data_sets/")

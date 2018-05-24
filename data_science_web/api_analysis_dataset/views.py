@@ -1,7 +1,8 @@
-from .serializers import SerializerAnalysis, SerializerAnalysisDetail, DownloadZipSerializer, DownloadAllZipSerializer
 from rest_framework import generics
-from django.db.models import QuerySet
+from rest_framework.response import Response
+from rest_framework.status import HTTP_200_OK
 from analysis_dataset.models import Analysis, ResultAnalysis, ZipArchive
+from .serializers import SerializerAnalysis, SerializerAnalysisDetail, DownloadZipSerializer, DownloadAllZipSerializer
 
 
 # Create your views here.
@@ -27,7 +28,6 @@ class AnalysisDetail(generics.RetrieveUpdateDestroyAPIView):
     def put(self, request, *args, **kwargs):
         return super().partial_update(request, *args, **kwargs)
 
-from itertools import chain
 
 class AnalysisDownload(generics.ListAPIView):
     queryset = ZipArchive.objects.all()
@@ -35,13 +35,32 @@ class AnalysisDownload(generics.ListAPIView):
 
     def get_queryset(self):
         queryset = super().get_queryset()
-        result_queryset = ZipArchive.objects.none()
-        result_list = []
         analysis = Analysis.objects.filter(user=self.request.user)
-        for one_analysis in analysis:
-            result_analysis = ResultAnalysis.objects.get(analysis=one_analysis)
-            result_list.append(queryset.filter(analysis=result_analysis)[0])
-        return list(chain(result_queryset, result_list))
+        result_analysis = ResultAnalysis.objects.filter(analysis__in=analysis)
+        zip_archives = queryset.filter(analysis__in=result_analysis)
+        return zip_archives
+
+    def download(self, request, *args, **kwargs):
+        qs = self.filter_queryset(self.get_queryset())
+        queryset = self.paginate_queryset(qs) or qs
+        serializer = self.get_serializer(queryset, many=True)
+
+        filename = getattr(self, 'filename', self.get_view_name())
+        extension = self.get_content_negotiator().select_renderer(
+            request, self.renderer_classes
+        )[0].format
+
+        return Response(
+            data=serializer.data, status=HTTP_200_OK,
+            headers={
+                'content-disposition': (
+                    'attachment; filename="{}.{}"'.format(filename, extension)
+                )
+            }
+        )
+
+    def get(self, request, *args, **kwargs):
+        return self.download(request, *args, **kwargs)
 
 
 class AnalysisDownloadDetail(generics.RetrieveAPIView):
@@ -49,9 +68,23 @@ class AnalysisDownloadDetail(generics.RetrieveAPIView):
     lookup_field = "name"
     serializer_class = DownloadZipSerializer
 
-    def get_queryset(self):
-        queryset = super().get_queryset()
-        analysis = Analysis.objects.filter(user=self.request.user)
-        result_analysis = ResultAnalysis.objects.filter(analysis=analysis[0])
-        return queryset.filter(analysis=result_analysis[0])[0]
+    def download(self, request, *args, **kwargs):
+        obj = self.get_object()
+        serializer = self.get_serializer(obj)
 
+        filename = getattr(self, 'filename', self.get_view_name())
+        extension = self.get_content_negotiator().select_renderer(
+            request, self.renderer_classes
+        )[0].format
+
+        return Response(
+            data=serializer.data, status=HTTP_200_OK,
+            headers={
+                'content-disposition': (
+                    'attachment; filename="{}.{}"'.format(filename, extension)
+                )
+            }
+        )
+
+    def get(self, request, *args, **kwargs):
+        return self.download(request, *args, **kwargs)
