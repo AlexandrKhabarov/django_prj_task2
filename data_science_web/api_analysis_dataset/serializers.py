@@ -19,7 +19,8 @@ class SerializerAnalysisDetail(serializers.ModelSerializer):
                 raise CustomHTTPException
             return super().is_valid(raise_exception)
         else:
-            raise CustomHTTPException
+            raise CustomHTTPException # todo serializer не должен кидать HTTP exceptions
+        # todo django-rest exception handler посмотреть
 
     def update(self, instance, validated_data):
         validated_data["date_modification"] = now()
@@ -86,9 +87,9 @@ class SerializerAnalysis(serializers.ModelSerializer):
     user = serializers.ReadOnlyField(source="user.username")
 
     def create(self, validated_data):
-        validated_data["date_create"] = now()
-        validated_data["date_modification"] = now()
-        validated_data["result_analysis"] = os.path.join(settings.MEDIA_ROOT, validated_data["name"])
+        # validated_data["date_create"] = now()
+        # validated_data["date_modification"] = now()
+        # validated_data["result_analysis"] = os.path.join(settings.MEDIA_ROOT, validated_data["name"])
         validated_data["user"] = self.context['request'].user
 
         serializers.raise_errors_on_nested_writes('create', self, validated_data)

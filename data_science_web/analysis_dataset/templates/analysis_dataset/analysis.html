@@ -83,7 +83,7 @@
         </div>
         <div class="col">
             <form method="GET" action="{% url 'analysis' %}">
-                {% csrf_token %}
+{#                {% csrf_token %}#}
                 {{ form_search }}
                 <button type="submit">SEARCH Analysis</button>
             </form>

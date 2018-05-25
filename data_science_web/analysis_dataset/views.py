@@ -8,12 +8,9 @@ from django.views.generic.edit import ModelFormMixin
 from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
-from django.conf import settings
 import os
 from .forms import ConstantsForm, EditForm, SearchForm
 from .models import Analysis, ZipArchive
-from .help_functions import get_all_abs_paths, compress_zip
-from .analysis_tools import managers
 
 
 # Create your views here.
@@ -53,10 +50,7 @@ class EditPage(UpdateView):
 
     def form_valid(self, form):
         try:
-            managers.ApplicationManager().go(
-                form.instance,
-                settings.MEDIA_ROOT,
-            )
+            success_url = super().form_valid(form)
         except Exception as e:
             form.errors["error"] = e
             return super().form_invalid(form)
@@ -65,7 +59,6 @@ class EditPage(UpdateView):
             zip_arc.delete()
         except ObjectDoesNotExist:
             pass
-        success_url = super().form_valid(form)
         return super(ModelFormMixin, self).form_valid(success_url)
 
 
@@ -78,28 +71,16 @@ class DownloadZip(DetailView):
                 analysis = Analysis.objects.get(name=self.kwargs["name"])
             except ObjectDoesNotExist:
                 raise Http404("Analysis does not exist")
-            archive = ZipArchive.objects.filter(
-                name=self.kwargs["name"],
-                analysis=analysis
-            )
-            if not archive:
-                file_name = "{}_{}.zip".format(self.kwargs["name"], analysis.date_modification)
-                base_name_dir = "zip_files"
-                abs_path_dir = os.path.join(settings.MEDIA_ROOT, base_name_dir)
-                if not os.path.exists(abs_path_dir):
-                    os.mkdir(abs_path_dir)
-                compress_zip(os.path.join(abs_path_dir, file_name), get_all_abs_paths(analysis.result_analysis))
-                archive = ZipArchive()
-                archive.name = self.kwargs["name"]
-                archive.analysis = analysis
-                archive.zip_file = os.path.join(base_name_dir, file_name)
-                archive.save()
+            try:
+                archive = ZipArchive.objects.get(name=self.kwargs["name"], analysis=analysis)
+            except ObjectDoesNotExist:
+                archive = analysis.create_archive()
             return archive
         except ObjectDoesNotExist:
             raise Http404("Object does not exist")
 
-    def render_to_response(self, context, **response_kwargs):
-        archive = context.get("object")[0] if hasattr(context.get("object"), "__iter__") else context.get("object")
+    def render_to_response(self, context, **response_kwargs):  # можно использовать isinstance
+        archive = context.get("object")
         if isinstance(archive, ZipArchive):
             response = self.response_class(archive.zip_file.read(), content_type='application/zip')
             response["Content-Disposition"] = 'attachment; filename="{}"'.format(
@@ -115,7 +96,7 @@ class DeleteAnalysis(DeleteView):
     slug_url_kwarg = "name"
     object = None
 
-    def get(self, request, *args, **kwargs):
+    def get(self, request, *args, **kwargs):  # todo post method must be
         return self.delete(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -123,14 +104,12 @@ class DeleteAnalysis(DeleteView):
 
     def delete(self, request, *args, **kwargs):
         self.object = self.get_object()
-        if self.object:
-            zip_arc = ZipArchive.objects.filter(analysis=self.object)
-            if zip_arc:
-                zip_arc[0].delete()
-            self.object.delete()
-            success_url = self.get_success_url()
-            return HttpResponseRedirect(success_url)
-        raise Http404("Object does not exist")
+        zip_arc = ZipArchive.objects.filter(analysis=self.object)
+        if zip_arc:
+            zip_arc[0].delete()
+        self.object.delete()
+        success_url = self.get_success_url()
+        return HttpResponseRedirect(success_url)
 
 
 class DetailsPage(DetailView):
@@ -147,17 +126,13 @@ class RegisterPage(FormView):
 
     def form_valid(self, form):
         reg_form = form.clean()
-        if User.objects.filter(username=reg_form["username"]).exists():
+        username = reg_form["username"]
+        password1 = reg_form["password1"]
+        if User.objects.filter(username=username).exists():
             super().form_invalid(form)
-        new_user = User.objects.create_user(
-            username=reg_form['username'],
-            password=reg_form['password1']
-        )
+        new_user = User.objects.create_user(username=username, password=password1)
         new_user.save()
-        login(self.request, authenticate(
-            username=reg_form['username'],
-            password=reg_form['password1']
-        ))
+        login(self.request, authenticate(username=username, password=password1))
         return super(RegisterPage, self).form_valid(form)
 
 
@@ -167,18 +142,14 @@ class SignInPage(FormView):
     success_url = reverse_lazy("analysis")
 
     def form_valid(self, form):
-        login(self.request, authenticate(
-            self.request,
-            username=form.cleaned_data['username'],
-            password=form.cleaned_data['password']
-        ))
+        login(self.request, authenticate(self.request, **form.cleaned_data))
         return super().form_valid(form)
 
 
 class LogOut(View):
 
     @staticmethod
-    def get(request):
+    def get(request):  # todo сделать post
         logout(request)
         return redirect(reverse("user"))
 
@@ -188,18 +159,15 @@ class CreateAnalysis(CreateView):
     model = Analysis
     template_name = "analysis_dataset/create_analysis.html"
     success_url = reverse_lazy("analysis")
+    object = None
 
     def form_valid(self, form):
-        analysis = form.save(commit=False)
+        form.instance.user = User.objects.get(username=self.request.user.username)
         try:
-            managers.ApplicationManager().go(
-                analysis,
-                settings.MEDIA_ROOT,
-            )
+            response = super().form_valid(form)
         except Exception as e:
             form.errors["error"] = e
             return super().form_invalid(form)
-        analysis.user = User.objects.get(username=self.request.user.username)
-        analysis.result_analysis = os.path.join(settings.MEDIA_ROOT, analysis.name)
-        analysis.save()
-        return super().form_valid(form)
+        return response
+
+

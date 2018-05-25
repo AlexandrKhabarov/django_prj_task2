@@ -1,10 +1,14 @@
 from django.db import models
+from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
 from django.contrib.auth.models import User
+from django.core.exceptions import ValidationError
 import os
 import shutil
 import logging
 from .validators import greater_zero
+from .analysis_tools.managers import ApplicationManager
+from .help_functions import compress_zip, get_all_abs_paths
 
 
 # Create your models here.
@@ -46,6 +50,41 @@ class Analysis(models.Model):
             for analysis_file in os.listdir(self.result_analysis):
                 os.remove(os.path.join(self.result_analysis, analysis_file))
         logging.warning(f"Path does not exists {self.result_analysis}")
+
+    def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
+        # todo переопределить метод save и сделать метод для расчета анализа
+        is_new = self.pk is None
+        if is_new:
+            self.result_analysis = os.path.join(settings.MEDIA_ROOT, self.name)
+        self.calculate_analysis()
+        super().save(force_insert, force_update, using, update_fields)
+        # try:
+        #     self.create_archive()
+        # except Exception as e:
+        #     raise Exception(e)  # todo add CreateArchiveException
+
+    def calculate_analysis(self):
+        try:
+            ApplicationManager().go(
+                self,
+                settings.MEDIA_ROOT,
+            )
+        except Exception as e:
+            raise ValidationError(e)
+
+    def create_archive(self):
+        file_name = "{}_{}.zip".format(self.name, self.date_modification)
+        base_name_dir = "zip_files"
+        abs_path_dir = os.path.join(settings.MEDIA_ROOT, base_name_dir)
+        if not os.path.exists(abs_path_dir):
+            os.mkdir(abs_path_dir)
+        compress_zip(os.path.join(abs_path_dir, file_name), get_all_abs_paths(self.result_analysis))
+        archive = ZipArchive()
+        archive.name = self.name
+        archive.zip_file = os.path.join(base_name_dir, file_name)
+        archive.analysis = self
+        archive.save()
+        return archive
 
 
 class ZipArchive(models.Model):
