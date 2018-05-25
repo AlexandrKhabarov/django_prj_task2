@@ -27,10 +27,10 @@ class AnalysisPage(ListView):
     form_class = SearchForm
     model = Analysis
     paginate_by = 1
-    context_object_name = "analysises"
+    context_object_name = "analysises"  # todo анализы во множественном числе на англ.
 
-    def get_context_data(self, **kwargs):
-        queryset = self.object_list.filter(user=self.request.user)
+    def get_context_data(self, **kwargs):  # todo логичнее переопределить get_queryset а не get_context_data
+        queryset = self.object_list.filter(user=self.request.user)  # todo в get_context добать лишь form_search
         if self.request.GET.get('search_field', None):
             queryset = queryset.filter(
                 name__contains=self.request.GET.get('search_field'),
@@ -48,11 +48,6 @@ class EditPage(UpdateView):
 
     def form_valid(self, form):
         try:
-            zip_arc = ZipArchive.objects.get(analysis=form.instance)
-            zip_arc.delete()
-        except ObjectDoesNotExist:
-            pass
-        try:
             managers.ApplicationManager().go(
                 form.instance,
                 settings.MEDIA_ROOT,
@@ -60,6 +55,11 @@ class EditPage(UpdateView):
         except Exception as e:
             form.errors["error"] = e
             return super().form_invalid(form)
+        try:
+            zip_arc = ZipArchive.objects.get(analysis=form.instance)
+            zip_arc.delete()
+        except ObjectDoesNotExist:
+            pass
         success_url = super().form_valid(form)
         return super(ModelFormMixin, self).form_valid(success_url)
 

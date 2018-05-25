@@ -12,7 +12,7 @@ from .validators import greater_zero
 class Analysis(models.Model):
     name = models.CharField(max_length=30, unique=True, validators=[MinLengthValidator(3)])
     date_create = models.DateField(default=now)
-    date_modification = models.DateField(default=now)
+    date_modification = models.DateField(default=now) # todo auto_add_now https://docs.djangoproject.com/en/2.0/ref/models/fields/#django.db.models.DateField
     data_set = models.FileField(upload_to="data_sets/")
     signal_speed = models.IntegerField(validators=[MaxValueValidator(4), MinValueValidator(1)])
     signal_direction = models.IntegerField(validators=[MaxValueValidator(4), MinValueValidator(1)])
@@ -37,7 +37,7 @@ class Analysis(models.Model):
     def delete(self, using=None, keep_parents=False):
         self.data_set.delete()
         self.delete_results_analysis()
-        os.rmdir(self.result_analysis)
+        os.rmdir(self.result_analysis) # todo найти метод удаления папки с содержимым
         super(Analysis, self).delete(using, keep_parents)
 
     def delete_results_analysis(self):
@@ -51,7 +51,7 @@ class ZipArchive(models.Model):
     analysis = models.OneToOneField(Analysis, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (("name", "analysis"),)
+        unique_together = (("name", "analysis"),) # todo analysis лишнее поле
 
     def delete(self, using=None, keep_parents=False):
         self.zip_file.delete()
