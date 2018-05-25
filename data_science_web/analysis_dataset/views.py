@@ -27,15 +27,20 @@ class AnalysisPage(ListView):
     form_class = SearchForm
     model = Analysis
     paginate_by = 1
-    context_object_name = "analysises"  # todo анализы во множественном числе на англ.
+    context_object_name = "analysises"
 
-    def get_context_data(self, **kwargs):  # todo логичнее переопределить get_queryset а не get_context_data
-        queryset = self.object_list.filter(user=self.request.user)  # todo в get_context добать лишь form_search
+    def get_queryset(self):
+        queryset = super().get_queryset().filter(user=self.request.user)
         if self.request.GET.get('search_field', None):
             queryset = queryset.filter(
-                name__contains=self.request.GET.get('search_field'),
+                name__contains=self.request.GET.get('search_field')
             )
-        return super().get_context_data(object_list=queryset, form_search=self.form_class())
+        return queryset
+
+    def get_context_data(self, **kwargs):
+        context = super().get_context_data()
+        context["form_search"] = self.form_class()
+        return context
 
 
 class EditPage(UpdateView):
