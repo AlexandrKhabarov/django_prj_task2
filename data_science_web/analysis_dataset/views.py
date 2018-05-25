@@ -113,6 +113,7 @@ class DeleteAnalysis(DeleteView):
     success_url = reverse_lazy("analysis")
     slug_field = "name"
     slug_url_kwarg = "name"
+    object = None
 
     def get(self, request, *args, **kwargs):
         return self.delete(request, *args, **kwargs)
