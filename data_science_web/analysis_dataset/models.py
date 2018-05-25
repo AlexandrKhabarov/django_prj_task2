@@ -1,9 +1,9 @@
-import operator
 from django.db import models
 from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
 from django.contrib.auth.models import User
 import os
-from django.utils.timezone import now
+import shutil
+import logging
 from .validators import greater_zero
 
 
@@ -11,17 +11,17 @@ from .validators import greater_zero
 
 class Analysis(models.Model):
     name = models.CharField(max_length=30, unique=True, validators=[MinLengthValidator(3)])
-    date_create = models.DateField(default=now)
-    date_modification = models.DateField(default=now)
+    date_create = models.DateField(auto_now_add=True)
+    date_modification = models.DateField(auto_now=True)
     data_set = models.FileField(upload_to="data_sets/")
     signal_speed = models.IntegerField(validators=[MaxValueValidator(4), MinValueValidator(1)])
     signal_direction = models.IntegerField(validators=[MaxValueValidator(4), MinValueValidator(1)])
     step_group = models.IntegerField(validators=[greater_zero])
     start_sector_direction = models.IntegerField(
-        validators=[MaxValueValidator(360), MinValueValidator(1)]
+        validators=[MaxValueValidator(360), MinValueValidator(0)]
     )
     end_sector_direction = models.IntegerField(
-        validators=[MaxValueValidator(360), MinValueValidator(1)]
+        validators=[MaxValueValidator(360), MinValueValidator(0)]
     )
     start_sector_speed = models.IntegerField(validators=[MinValueValidator(0)])
     end_sector_speed = models.IntegerField(validators=[MinValueValidator(0)])
@@ -36,13 +36,16 @@ class Analysis(models.Model):
 
     def delete(self, using=None, keep_parents=False):
         self.data_set.delete()
-        self.delete_results_analysis()
-        os.rmdir(self.result_analysis)
+        # self.delete_results_analysis()
+        # os.rmdir(self.result_analysis)
+        shutil.rmtree(self.result_analysis)
         super(Analysis, self).delete(using, keep_parents)
 
     def delete_results_analysis(self):
-        for analysis_file in os.listdir(self.result_analysis):
-            os.remove(os.path.join(self.result_analysis, analysis_file))
+        if os.path.exists(self.result_analysis):
+            for analysis_file in os.listdir(self.result_analysis):
+                os.remove(os.path.join(self.result_analysis, analysis_file))
+        logging.warning(f"Path does not exists {self.result_analysis}")
 
 
 class ZipArchive(models.Model):
@@ -51,7 +54,7 @@ class ZipArchive(models.Model):
     analysis = models.OneToOneField(Analysis, on_delete=models.CASCADE)
 
     class Meta:
-        unique_together = (("name", "analysis"),)
+        unique_together = ("name",)
 
     def delete(self, using=None, keep_parents=False):
         self.zip_file.delete()
