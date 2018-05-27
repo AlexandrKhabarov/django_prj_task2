@@ -45,7 +45,7 @@ class EditForm(forms.ModelForm):
         exclude = ["date_create", "date_modification", "user", "data_set", "name", "result_analysis"]
 
 
-class ConstantsForm(EditForm): # todo rename class
+class CreateAnalysisForm(EditForm):
     name = forms.CharField(label="Name", max_length=30, widget=forms.TextInput(attrs={
         "class": "form-control"
     }))

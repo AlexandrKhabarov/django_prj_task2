@@ -9,7 +9,7 @@ from django.contrib.auth.forms import UserCreationForm, AuthenticationForm
 from django.contrib.auth.models import User
 from django.core.exceptions import ObjectDoesNotExist
 import os
-from .forms import ConstantsForm, EditForm, SearchForm
+from .forms import CreateAnalysisForm, EditForm, SearchForm
 from .models import Analysis, ZipArchive
 
 
@@ -96,7 +96,7 @@ class DeleteAnalysis(DeleteView):
     slug_url_kwarg = "name"
     object = None
 
-    def get(self, request, *args, **kwargs):  # todo post method must be
+    def post(self, request, *args, **kwargs):
         return self.delete(request, *args, **kwargs)
 
     def get_queryset(self):
@@ -148,14 +148,18 @@ class SignInPage(FormView):
 
 class LogOut(View):
 
+    # @staticmethod
+    # def get(request):
+    #     logout(request)
+    #     return redirect(reverse("user"))
     @staticmethod
-    def get(request):  # todo сделать post
+    def post(request):
         logout(request)
-        return redirect(reverse("user"))
+        return redirect(reverse("sign-in"))
 
 
 class CreateAnalysis(CreateView):
-    form_class = ConstantsForm
+    form_class = CreateAnalysisForm
     model = Analysis
     template_name = "analysis_dataset/create_analysis.html"
     success_url = reverse_lazy("analysis")

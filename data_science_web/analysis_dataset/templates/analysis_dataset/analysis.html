@@ -19,7 +19,10 @@
                 <a href="{% url "analysis" %}" class="nav-link">Analysis</a>
             </li>
             <li class="nav-item active">
-                <a href="{% url 'log-out' %}" class="nav-link">LogOut</a>
+                <form method="POST" action="{% url 'log-out' %}">
+                    {% csrf_token %}
+                        <button type="submit">LogOut</button>
+                </form>
             </li>
             <li class="nav-time active">
                 <a href="{% url  "user" %}" class="nav-link">Home</a>
@@ -54,6 +57,10 @@
                                 <a href="{% url "details" name=analysis.name %}">Details</a>
                                 <a href="{% url "edit" name=analysis.name %}">Edit</a>
                                 <a href="{% url "download-zip" name=analysis.name %}">Download Zip</a>
+                                <form method="POST" action="{% url 'delete' name=analysis.name %}">
+                                    {% csrf_token %}
+                                    <button type="submit">Delelte Analysis</button>
+                                </form>
                                 <a href="{% url "delete" name=analysis.name %}">Delete Analysis</a>
                             </div>
                         </div>
@@ -83,7 +90,6 @@
         </div>
         <div class="col">
             <form method="GET" action="{% url 'analysis' %}">
-{#                {% csrf_token %}#}
                 {{ form_search }}
                 <button type="submit">SEARCH Analysis</button>
             </form>

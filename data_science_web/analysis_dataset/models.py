@@ -39,10 +39,8 @@ class Analysis(models.Model):
         ordering = ["date_modification"]
 
     def delete(self, using=None, keep_parents=False):
-        self.data_set.delete()
-        # self.delete_results_analysis()
-        # os.rmdir(self.result_analysis)
         shutil.rmtree(self.result_analysis)
+        self.data_set.delete(save=False)
         super(Analysis, self).delete(using, keep_parents)
 
     def delete_results_analysis(self):
@@ -52,16 +50,11 @@ class Analysis(models.Model):
         logging.warning(f"Path does not exists {self.result_analysis}")
 
     def save(self, force_insert=False, force_update=False, using=None, update_fields=None):
-        # todo переопределить метод save и сделать метод для расчета анализа
         is_new = self.pk is None
+        self.calculate_analysis()
         if is_new:
             self.result_analysis = os.path.join(settings.MEDIA_ROOT, self.name)
-        self.calculate_analysis()
         super().save(force_insert, force_update, using, update_fields)
-        # try:
-        #     self.create_archive()
-        # except Exception as e:
-        #     raise Exception(e)  # todo add CreateArchiveException
 
     def calculate_analysis(self):
         try:
@@ -70,6 +63,7 @@ class Analysis(models.Model):
                 settings.MEDIA_ROOT,
             )
         except Exception as e:
+            shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.name))
             raise ValidationError(e)
 
     def create_archive(self):

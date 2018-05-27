@@ -21,7 +21,10 @@
                 <a href="{% url "analysis" %}" class="nav-link">Analysis</a>
             </li>
             <li class="nav-item active">
-                <a href="{% url 'log-out' %}" class="nav-link">LogOut</a>
+                <form method="POST" action="{% url 'log-out' %}">
+                    {% csrf_token %}
+                    <button type="submit">LogOut</button>
+                </form>
             </li>
         </ul>
     </nav>

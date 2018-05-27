@@ -39,14 +39,15 @@ INSTALLED_APPS = [
     'rest_framework.authtoken',
     'analysis_dataset',
 ]
-
+# from data_science_web.api_analysis_dataset.exception_handler import custom_exception_handler
 REST_FRAMEWORK = {
     'DEFAULT_AUTHENTICATION_CLASSES': (
         'rest_framework.authentication.TokenAuthentication',
     ),
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
-    )
+    ),
+    'EXCEPTION_HANDLER': 'api_analysis_dataset.exception_handler.custom_exception_handler',
 }
 
 MIDDLEWARE = [
