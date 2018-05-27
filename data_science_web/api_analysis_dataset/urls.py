@@ -1,10 +1,5 @@
-from rest_framework.authtoken import views as token_view
-from django.urls import path
-from . import views
+from django.urls import path, include
 
 urlpatterns = [
-    path('analysis/', views.AnalysisList.as_view()),
-    path('analysis/<str:name>/', views.AnalysisDetail.as_view()),
-    path('analysis/<str:name>/download/', views.AnalysisDownloadDetail.as_view()),
-    path('api-token-auth/', token_view.obtain_auth_token),
+    path("v1/", include("api_analysis_dataset.v1.urls"), name="api_v1")
 ]

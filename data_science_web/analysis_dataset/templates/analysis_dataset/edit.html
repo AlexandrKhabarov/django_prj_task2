@@ -8,36 +8,9 @@
 {% endblock %}
 
 {% block navbar %}
-    <nav class="navbar navbar-expand-lg navbar-light bg-light">
-        <div class="container-fluid">
-            <div class="navbar-header">
-                <a href="{% url 'user' %}" class="navbar-brand">Hello, {{ request.user }}!</a>
-            </div>
-        </div>
-        <ul class="navbar-nav nav">
-            <li class="nav-item active">
-                <a href="{% url "analysis" %}" class="nav-link">Analysis</a>
-            </li>
-            <li class="nav-item active">
-                <a href="{% url 'log-out' %}" class="nav-link">LogOut</a>
-            </li>
-            <li class="nav-time active">
-                <a href="{% url  "user" %}" class="nav-link">Home</a>
-            </li>
-        </ul>
-        <ul class="pagination">
-            {% if previous %}
-                <li class="page-item"><a class="page-link" href="{% url "edit" name=previous.name %}">Previous</a></li>
-            {% else %}
-                <li class="page-item"><a class="page-link" href="">Previous</a></li>
-            {% endif %}
-            {% if next %}
-                <li class="page-item"><a class="page-link" href="{% url "edit" name=next.name %}">Next</a></li>
-            {% else %}
-                <li class="page-item"><a class="page-link" href="">Next</a></li>
-            {% endif %}
-        </ul>
-    </nav>
+    <li class="nav-item active">
+        <a href="{% url 'create' %}" class="nav-link">Create Analysis</a>
+    </li>
 {% endblock %}
 
 {% block content %}

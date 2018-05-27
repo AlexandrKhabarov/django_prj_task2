@@ -40,16 +40,12 @@ class EditForm(forms.ModelForm):
         "class": "col form-group"
     }))
 
-    def clean(self):
-        cleaned_data = super().clean()
-        return cleaned_data
-
     class Meta:
         model = Analysis
         exclude = ["date_create", "date_modification", "user", "data_set", "name", "result_analysis"]
 
 
-class ConstantsForm(EditForm):
+class CreateAnalysisForm(EditForm):
     name = forms.CharField(label="Name", max_length=30, widget=forms.TextInput(attrs={
         "class": "form-control"
     }))

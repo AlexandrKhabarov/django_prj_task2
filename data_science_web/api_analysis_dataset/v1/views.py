@@ -1,6 +1,6 @@
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
+from rest_framework.exceptions import NotFound
+from django.core.exceptions import ObjectDoesNotExist
 from analysis_dataset.models import Analysis, ZipArchive
 from .serializers import SerializerAnalysis, SerializerAnalysisDetail, DownloadZipSerializer
 
@@ -16,7 +16,7 @@ class AnalysisList(generics.ListCreateAPIView):
         return queryset.filter(user=self.request.user)
 
 
-class AnalysisDetail(generics.RetrieveUpdateDestroyAPIView):  # todo add calculation and zip construct
+class AnalysisDetail(generics.RetrieveUpdateDestroyAPIView):
     queryset = Analysis.objects.all()
     serializer_class = SerializerAnalysisDetail
     lookup_field = "name"
@@ -34,23 +34,11 @@ class AnalysisDownloadDetail(generics.RetrieveAPIView):
     lookup_field = "name"
     serializer_class = DownloadZipSerializer
 
-    def download(self, request, *args, **kwargs):
-        obj = self.get_object()
-        serializer = self.get_serializer(obj)
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        try:
+            analysis = Analysis.objects.get(user=self.request.user, name=self.kwargs["name"])
+        except ObjectDoesNotExist:
+            raise NotFound
+        return queryset.filter(analysis=analysis)
 
-        filename = getattr(self, 'filename', self.get_view_name())
-        extension = self.get_content_negotiator().select_renderer(
-            request, self.renderer_classes
-        )[0].format
-
-        return Response(
-            data=serializer.data, status=HTTP_200_OK,
-            headers={
-                'content-disposition': (
-                    'attachment; filename="{}.{}"'.format(filename, extension)
-                )
-            }
-        )
-
-    def get(self, request, *args, **kwargs):
-        return self.download(request, *args, **kwargs)
