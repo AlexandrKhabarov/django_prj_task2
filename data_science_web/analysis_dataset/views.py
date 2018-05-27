@@ -148,10 +148,6 @@ class SignInPage(FormView):
 
 class LogOut(View):
 
-    # @staticmethod
-    # def get(request):
-    #     logout(request)
-    #     return redirect(reverse("user"))
     @staticmethod
     def post(request):
         logout(request)

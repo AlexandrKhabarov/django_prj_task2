@@ -59,9 +59,8 @@
                                 <a href="{% url "download-zip" name=analysis.name %}">Download Zip</a>
                                 <form method="POST" action="{% url 'delete' name=analysis.name %}">
                                     {% csrf_token %}
-                                    <button type="submit">Delelte Analysis</button>
+                                    <button type="submit">Delete Analysis</button>
                                 </form>
-                                <a href="{% url "delete" name=analysis.name %}">Delete Analysis</a>
                             </div>
                         </div>
                     </div>

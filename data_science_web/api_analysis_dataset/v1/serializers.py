@@ -18,6 +18,7 @@ class SerializerAnalysisDetail(serializers.ModelSerializer):
     def update(self, instance, validated_data):
         instance = super().update(instance, validated_data)
         try:
+            instance.delete_archive()
             instance.create_archive()
         except Exception:
             raise CannotCreateArchive(detail=f"{traceback.format_exc()}")

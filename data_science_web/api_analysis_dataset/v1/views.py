@@ -1,6 +1,6 @@
 from rest_framework import generics
-from rest_framework.response import Response
-from rest_framework.status import HTTP_200_OK
+from rest_framework.exceptions import NotFound
+from django.core.exceptions import ObjectDoesNotExist
 from analysis_dataset.models import Analysis, ZipArchive
 from .serializers import SerializerAnalysis, SerializerAnalysisDetail, DownloadZipSerializer
 
@@ -33,4 +33,12 @@ class AnalysisDownloadDetail(generics.RetrieveAPIView):
     queryset = ZipArchive.objects.all()
     lookup_field = "name"
     serializer_class = DownloadZipSerializer
+
+    def get_queryset(self):
+        queryset = super().get_queryset()
+        try:
+            analysis = Analysis.objects.get(user=self.request.user, name=self.kwargs["name"])
+        except ObjectDoesNotExist:
+            raise NotFound
+        return queryset.filter(analysis=analysis)
 

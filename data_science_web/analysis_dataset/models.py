@@ -2,7 +2,7 @@ from django.db import models
 from django.conf import settings
 from django.core.validators import MaxValueValidator, MinValueValidator, MinLengthValidator
 from django.contrib.auth.models import User
-from django.core.exceptions import ValidationError
+from django.core.exceptions import ValidationError, ObjectDoesNotExist
 import os
 import shutil
 import logging
@@ -63,8 +63,11 @@ class Analysis(models.Model):
                 settings.MEDIA_ROOT,
             )
         except Exception as e:
-            shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.name))
-            raise ValidationError(e)
+            try:
+                Analysis.objects.get(name=self.name)
+            except ObjectDoesNotExist:
+                shutil.rmtree(os.path.join(settings.MEDIA_ROOT, self.name))
+                raise ValidationError(e)
 
     def create_archive(self):
         file_name = "{}_{}.zip".format(self.name, self.date_modification)
@@ -79,6 +82,12 @@ class Analysis(models.Model):
         archive.analysis = self
         archive.save()
         return archive
+
+    def delete_archive(self):
+        try:
+            ZipArchive.objects.get(name=self.name).delete()
+        except Exception:
+            pass
 
 
 class ZipArchive(models.Model):
