@@ -9,28 +9,31 @@ class EditForm(forms.ModelForm):
         "type": "number",
         "class": "form-control"
     }))
-    signal_direction = forms.IntegerField(label="Signal Direction", max_value=4, min_value=1, widget=forms.NumberInput(attrs={
-        "min": 1,
-        "max": 4,
-        "type": "number",
-        "class": "form-control"
-    }))
+    signal_direction = forms.IntegerField(label="Signal Direction", max_value=4, min_value=1,
+                                          widget=forms.NumberInput(attrs={
+                                              "min": 1,
+                                              "max": 4,
+                                              "type": "number",
+                                              "class": "form-control",
+                                          }))
     step_group = forms.IntegerField(label="Step Group", widget=forms.NumberInput(attrs={
         "type": "number",
         "class": "form-control"
     }))
-    start_sector_direction = forms.IntegerField(label="Start Sector Direction", min_value=0, max_value=360, widget=forms.NumberInput(attrs={
-        "min": 0,
-        "max": 360,
-        "type": "number",
-        "class": "col form-group"
-    }))
-    end_sector_direction = forms.IntegerField(label="End Sector Direction", min_value=0, max_value=360, widget=forms.NumberInput(attrs={
-        "min": 0,
-        "max": 360,
-        "type": "number",
-        "class": "col form-group"
-    }))
+    start_sector_direction = forms.IntegerField(label="Start Sector Direction", min_value=0, max_value=360,
+                                                widget=forms.NumberInput(attrs={
+                                                    "min": 0,
+                                                    "max": 360,
+                                                    "type": "number",
+                                                    "class": "col form-group"
+                                                }))
+    end_sector_direction = forms.IntegerField(label="End Sector Direction", min_value=0, max_value=360,
+                                              widget=forms.NumberInput(attrs={
+                                                  "min": 0,
+                                                  "max": 360,
+                                                  "type": "number",
+                                                  "class": "col form-group"
+                                              }))
     start_sector_speed = forms.IntegerField(label="End Sector Direction", min_value=0, widget=forms.NumberInput(attrs={
         "type": "number",
         "class": "col form-group"

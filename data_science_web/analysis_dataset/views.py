@@ -169,5 +169,3 @@ class CreateAnalysis(CreateView):
             form.errors["error"] = e
             return super().form_invalid(form)
         return response
-
-

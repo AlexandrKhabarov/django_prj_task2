@@ -47,7 +47,7 @@ REST_FRAMEWORK = {
     'DEFAULT_PERMISSION_CLASSES': (
         'rest_framework.permissions.IsAuthenticated',
     ),
-    'EXCEPTION_HANDLER': 'api_analysis_dataset.v1.exception_handler.custom_exception_handler',
+    'EXCEPTION_HANDLER': 'analysis_dataset.exception_handler.custom_exception_handler',
 }
 
 MIDDLEWARE = [

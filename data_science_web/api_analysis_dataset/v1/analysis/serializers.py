@@ -1,7 +1,11 @@
+import logging
 import traceback
 from rest_framework import serializers
-from .exceptions import UnrecognizedFields, CannotCreateAnalysis, CannotCreateArchive
+from .exceptions import CannotCreateAnalysis, CannotCreateArchive
 from analysis_dataset.models import Analysis, ZipArchive
+
+
+logger = logging.getLogger(__name__)
 
 
 class SerializerAnalysisDetail(serializers.ModelSerializer):
@@ -21,7 +25,8 @@ class SerializerAnalysisDetail(serializers.ModelSerializer):
             instance.delete_archive()
             instance.create_archive()
         except Exception:
-            raise CannotCreateArchive(detail=f"{traceback.format_exc()}")
+            logging.exception(traceback.format_exc())
+            raise CannotCreateArchive(detail="Cannot create archive")
         return instance
 
     class Meta:
@@ -49,12 +54,14 @@ class SerializerAnalysis(serializers.ModelSerializer):
         validated_data["user"] = self.context['request'].user
         try:
             instance = super().create(validated_data)
-        except Exception as e:
-            raise CannotCreateAnalysis(detail=f"Cannot create analysis: {e}")
+        except Exception:
+            logging.exception(traceback.format_exc())
+            raise CannotCreateAnalysis(detail="Cannot create analysis")
         try:
             instance.create_archive()
         except Exception:
-            raise CannotCreateArchive(detail=f"Cannot create archive: {traceback.format_exc()}")
+            logging.exception(traceback.format_exc())
+            raise CannotCreateArchive(detail="Cannot create archive")
         return instance
 
     class Meta:
